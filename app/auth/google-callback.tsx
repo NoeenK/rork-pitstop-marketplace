@@ -1,0 +1,130 @@
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { ActivityIndicator, StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { useAuth } from "@/contexts/AuthContext";
+import { Colors } from "@/constants/colors";
+
+export default function GoogleCallbackScreen() {
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const { completeGoogleSignIn } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+
+  const searchString = useMemo(() => {
+    const searchParams = new URLSearchParams();
+
+    Object.entries(params).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach((item) => {
+          if (typeof item === "string") {
+            searchParams.append(key, item);
+          }
+        });
+      } else if (typeof value === "string") {
+        searchParams.set(key, value);
+      }
+    });
+
+    return searchParams.toString();
+  }, [params]);
+
+  const handleRetry = useCallback(() => {
+    router.replace("/onboarding/login");
+  }, [router]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const finalize = async () => {
+      try {
+        // Build the callback URL from search params
+        const callbackUrl = `pitstop://auth/google-callback?${searchString}`;
+        await completeGoogleSignIn(callbackUrl);
+        if (!isMounted) {
+          return;
+        }
+        router.replace("/(tabs)/(home)");
+      } catch (err: any) {
+        console.error("[GoogleCallbackScreen]", err);
+        if (!isMounted) {
+          return;
+        }
+        setError(err?.message ?? "Unable to complete Google sign in.");
+      }
+    };
+
+    finalize();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [completeGoogleSignIn, router, searchString]);
+
+  return (
+    <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+      <View style={styles.container} testID="googleCallbackContainer">
+        <ActivityIndicator size="large" color={Colors.primary} testID="googleCallbackLoader" />
+        <Text style={styles.statusText} testID="googleCallbackStatus">
+          {error ? "Google sign in failed" : "Signing you in with Google..."}
+        </Text>
+        {error ? (
+          <>
+            <Text style={styles.errorText} testID="googleCallbackError">
+              {error}
+            </Text>
+            <TouchableOpacity
+              onPress={handleRetry}
+              style={styles.retryButton}
+              activeOpacity={0.8}
+              testID="googleCallbackRetryButton"
+            >
+              <Text style={styles.retryButtonText}>Return to Login</Text>
+            </TouchableOpacity>
+          </>
+        ) : null}
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
+  statusText: {
+    marginTop: 16,
+    fontSize: 16,
+    fontWeight: "600" as const,
+    color: "#1C1C1E",
+    textAlign: "center" as const,
+  },
+  errorText: {
+    marginTop: 12,
+    fontSize: 14,
+    lineHeight: 20,
+    color: Colors.error,
+    textAlign: "center" as const,
+  },
+  retryButton: {
+    marginTop: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    backgroundColor: "#FFFFFF",
+  },
+  retryButtonText: {
+    fontSize: 16,
+    fontWeight: "600" as const,
+    color: Colors.primary,
+  },
+});
