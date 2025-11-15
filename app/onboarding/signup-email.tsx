@@ -156,13 +156,25 @@ export default function SignUpEmailScreen() {
   };
 
   const handleGoogleSignIn = async () => {
-    if (isLoading || isHandlingOAuth) return;
+    if (isLoading || isHandlingOAuth) {
+      console.log("[SignUp] Already loading or handling OAuth, skipping");
+      return;
+    }
     try {
       setIsLoading(true);
       console.log("[SignUp] Starting Google sign in");
       
       const result = await signInWithGoogle();
       console.log("[SignUp] Google sign in result:", result);
+      
+      // If result is null, user cancelled - just reset loading
+      if (result === null) {
+        console.log("[SignUp] User cancelled Google sign in");
+        setIsLoading(false);
+        return;
+      }
+      
+      // Don't set isLoading to false here - let the pendingOAuthUser effect handle navigation
     } catch (error: any) {
       console.error("[SignUp] Google sign in error:", error);
       if (error?.message && !error.message.includes('cancelled')) {

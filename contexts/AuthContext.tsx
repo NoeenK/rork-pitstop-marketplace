@@ -278,6 +278,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         path: "auth/google-callback",
       });
 
+      console.log("[AuthContext] Redirect URI:", redirectUri);
+
       const { data, error } = await supabaseClient.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -299,24 +301,34 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
       if (data.url && Platform.OS !== "web") {
         // For mobile, open auth session
+        console.log("[AuthContext] Opening auth session with URL:", data.url);
         const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUri);
-        console.log("[AuthContext] Google OAuth session result", result.type);
+        console.log("[AuthContext] Google OAuth session result:", result);
 
         if (result.type === "success" && result.url) {
+          console.log("[AuthContext] Success - completing sign in with URL:", result.url);
           return await completeGoogleSignIn(result.url);
         }
 
         if (result.type === "cancel") {
           console.log("[AuthContext] Google OAuth cancelled by user");
-          return null;
+          const cancelError = new Error("cancelled");
+          throw cancelError;
         }
 
+        console.error("[AuthContext] Unexpected result type:", result.type);
         throw new Error("Authentication failed or was cancelled");
       }
 
       throw new Error("No OAuth URL received from Supabase");
-    } catch (error) {
+    } catch (error: any) {
       console.error("[AuthContext] Google OAuth failed", error);
+      
+      // Don't throw if user cancelled
+      if (error?.message?.includes('cancelled')) {
+        return null;
+      }
+      
       throw error;
     } finally {
       setIsLoading(false);
