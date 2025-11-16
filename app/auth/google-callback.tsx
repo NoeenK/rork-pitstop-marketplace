@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { ActivityIndicator, StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View, TouchableOpacity, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
@@ -39,8 +39,17 @@ export default function GoogleCallbackScreen() {
 
     const finalize = async () => {
       try {
-        // Build the callback URL from search params
-        const callbackUrl = `pitstop://auth/google-callback?${searchString}`;
+        // Build the callback URL - use actual URL for web, deep link for mobile
+        let callbackUrl: string;
+        if (Platform.OS === "web") {
+          // For web, use the actual browser URL
+          callbackUrl = window.location.href;
+        } else {
+          // For mobile, use deep link
+          callbackUrl = `pitstop://auth/google-callback?${searchString}`;
+        }
+        
+        console.log("[GoogleCallbackScreen] Processing callback URL:", callbackUrl);
         await completeGoogleSignIn(callbackUrl);
         
         if (!isMounted) {
