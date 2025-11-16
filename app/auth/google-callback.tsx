@@ -35,15 +35,19 @@ export default function GoogleCallbackScreen() {
 
   useEffect(() => {
     let isMounted = true;
+    let timeoutId: NodeJS.Timeout;
 
     const finalize = async () => {
       try {
         // Build the callback URL from search params
         const callbackUrl = `pitstop://auth/google-callback?${searchString}`;
         await completeGoogleSignIn(callbackUrl);
+        
         if (!isMounted) {
           return;
         }
+
+        // Navigate immediately after session is created (don't wait for profile)
         router.replace("/(tabs)/(home)");
       } catch (err: any) {
         console.error("[GoogleCallbackScreen]", err);
@@ -54,12 +58,22 @@ export default function GoogleCallbackScreen() {
       }
     };
 
+    // Add timeout to prevent infinite loading
+    timeoutId = setTimeout(() => {
+      if (isMounted && !error) {
+        setError("Sign in is taking longer than expected. Please try again.");
+      }
+    }, 15000); // 15 second timeout
+
     finalize();
 
     return () => {
       isMounted = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     };
-  }, [completeGoogleSignIn, router, searchString]);
+  }, [completeGoogleSignIn, router, searchString, error]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
