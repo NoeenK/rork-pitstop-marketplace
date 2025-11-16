@@ -303,6 +303,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         options: {
           redirectTo: redirectUri,
           skipBrowserRedirect: Platform.OS === "web",
+          queryParams: {
+            prompt: 'select_account',
+          },
         },
       });
 
@@ -320,7 +323,13 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       if (data.url && Platform.OS !== "web") {
         // For mobile, open auth session
         console.log("[AuthContext] Opening auth session with URL:", data.url);
-        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUri);
+        const result = await WebBrowser.openAuthSessionAsync(
+          data.url,
+          redirectUri,
+          {
+            showInRecents: true,
+          }
+        );
         console.log("[AuthContext] Google OAuth session result:", result);
 
         if (result.type === "success" && result.url) {
@@ -332,6 +341,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           console.log("[AuthContext] Google OAuth cancelled by user");
           const cancelError = new Error("cancelled");
           throw cancelError;
+        }
+
+        if (result.type === "dismiss") {
+          console.log("[AuthContext] Google OAuth dismissed by user");
+          const dismissError = new Error("cancelled");
+          throw dismissError;
         }
 
         console.error("[AuthContext] Unexpected result type:", result.type);
