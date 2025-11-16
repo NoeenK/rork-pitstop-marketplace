@@ -121,19 +121,24 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
         if (session?.user) {
           console.log("[AuthContext] Found Supabase session", session.user.id);
-          const profileUser = await fetchProfileById(session.user.id);
-          if (profileUser) {
-            setUser(profileUser);
-          } else {
-            // If profile doesn't exist yet, create a basic user from session
-            const basicUser = buildUserFromSession({
-              id: session.user.id,
-              email: session.user.email || "",
-              displayName: session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split("@")[0] || "User",
-              avatarUrl: session.user.user_metadata?.avatar_url || null,
-            });
-            setUser(basicUser);
-          }
+          // Set user immediately from session
+          const basicUser = buildUserFromSession({
+            id: session.user.id,
+            email: session.user.email || "",
+            displayName: session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split("@")[0] || "User",
+            avatarUrl: session.user.user_metadata?.avatar_url || null,
+          });
+          setUser(basicUser);
+
+          // Fetch profile in background (non-blocking)
+          fetchProfileById(session.user.id).then((profileUser) => {
+            if (profileUser) {
+              setUser(profileUser);
+            }
+          }).catch((err) => {
+            console.error("[AuthContext] Background profile fetch failed", err);
+            // Keep using basic user if profile fetch fails
+          });
         }
 
         const storedOnboarding = await AsyncStorage.getItem("onboarding_completed");
@@ -153,10 +158,24 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       console.log("[AuthContext] Auth state changed", event, session?.user?.id);
 
       if (event === "SIGNED_IN" && session?.user) {
-        const profileUser = await fetchProfileById(session.user.id);
-        if (profileUser) {
-          setUser(profileUser);
-        }
+        // Set user immediately from session
+        const basicUser = buildUserFromSession({
+          id: session.user.id,
+          email: session.user.email || "",
+          displayName: session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split("@")[0] || "User",
+          avatarUrl: session.user.user_metadata?.avatar_url || null,
+        });
+        setUser(basicUser);
+
+        // Fetch profile in background (non-blocking)
+        fetchProfileById(session.user.id).then((profileUser) => {
+          if (profileUser) {
+            setUser(profileUser);
+          }
+        }).catch((err) => {
+          console.error("[AuthContext] Background profile fetch failed", err);
+          // Keep using basic user if profile fetch fails
+        });
       }
 
       if (event === "SIGNED_OUT") {
@@ -202,42 +221,36 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         throw new Error("Failed to create session from Google OAuth.");
       }
 
-      // Fetch the user profile
-      const profileUser = await fetchProfileById(data.user.id);
-
-      if (profileUser) {
-        setUser(profileUser);
-      } else {
-        // If profile doesn't exist yet, create a basic user from session
-        const basicUser = buildUserFromSession({
-          id: data.user.id,
-          email: data.user.email || "",
-          displayName: data.user.user_metadata?.full_name || data.user.user_metadata?.name || data.user.email?.split("@")[0] || "User",
-          avatarUrl: data.user.user_metadata?.avatar_url || null,
-        });
-        setUser(basicUser);
-      }
-
-      const resolvedUser = profileUser || buildUserFromSession({
+      // Set user immediately from session (don't wait for profile)
+      const basicUser = buildUserFromSession({
         id: data.user.id,
         email: data.user.email || "",
         displayName: data.user.user_metadata?.full_name || data.user.user_metadata?.name || data.user.email?.split("@")[0] || "User",
         avatarUrl: data.user.user_metadata?.avatar_url || null,
       });
+      setUser(basicUser);
 
-      const needsProfileSetup = !profileUser
-        || !profileUser.phoneNumber
-        || profileUser.teamNumber === null;
+      // Fetch profile in background (non-blocking)
+      fetchProfileById(data.user.id).then((profileUser) => {
+        if (profileUser) {
+          setUser(profileUser);
+        }
+      }).catch((err) => {
+        console.error("[AuthContext] Background profile fetch failed", err);
+        // Keep using basic user if profile fetch fails
+      });
+
+      const needsProfileSetup = true; // Will be updated when profile loads
 
       setPendingOAuthEmail(data.user.email || null);
       setPendingOAuthUser({
-        email: resolvedUser.email,
-        fullName: resolvedUser.displayName,
+        email: basicUser.email,
+        fullName: basicUser.displayName,
         needsProfileSetup,
-        userId: resolvedUser.id,
+        userId: basicUser.id,
       });
 
-      return resolvedUser;
+      return basicUser;
     } catch (error) {
       console.error("[AuthContext] Google sign in completion failed", error);
       throw error;
@@ -273,10 +286,15 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       setIsLoading(true);
       console.log("[AuthContext] Starting Google OAuth flow with Supabase");
 
-      const redirectUri = makeRedirectUri({
-        scheme: "pitstop",
-        path: "auth/google-callback",
-      });
+      // Use Supabase's redirect URL format
+      // For mobile: use the deep link callback
+      // For web: use Supabase's callback URL
+      const redirectUri = Platform.OS === "web" 
+        ? `${window.location.origin}/auth/callback`
+        : makeRedirectUri({
+            scheme: "pitstop",
+            path: "auth/google-callback",
+          });
 
       console.log("[AuthContext] Redirect URI:", redirectUri);
 
@@ -352,6 +370,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           const { data, error } = await supabaseClient.auth.signInWithIdToken({
             provider: "apple",
             token: credential.identityToken,
+            nonce: credential.nonce || undefined,
           });
 
           if (error) {
@@ -359,30 +378,37 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
             throw error;
           }
 
-          // Load user profile after successful authentication
+          // Set user immediately from session (don't wait for profile)
           if (data.user) {
-            const profileUser = await fetchProfileById(data.user.id);
-            if (profileUser) {
-              setUser(profileUser);
-            } else {
-              // If profile doesn't exist yet, create a basic user from session
-              const basicUser = buildUserFromSession({
-                id: data.user.id,
-                email: data.user.email || credential.email || "",
-                displayName: credential.fullName?.givenName && credential.fullName?.familyName
-                  ? `${credential.fullName.givenName} ${credential.fullName.familyName}`
-                  : credential.email?.split("@")[0] || "User",
-                avatarUrl: null,
-              });
-              setUser(basicUser);
-            }
+            const basicUser = buildUserFromSession({
+              id: data.user.id,
+              email: data.user.email || credential.email || "",
+              displayName: credential.fullName?.givenName && credential.fullName?.familyName
+                ? `${credential.fullName.givenName} ${credential.fullName.familyName}`
+                : credential.email?.split("@")[0] || "User",
+              avatarUrl: null,
+            });
+            setUser(basicUser);
+
+            // Fetch profile in background (non-blocking)
+            fetchProfileById(data.user.id).then((profileUser) => {
+              if (profileUser) {
+                setUser(profileUser);
+              }
+            }).catch((err) => {
+              console.error("[AuthContext] Background profile fetch failed", err);
+              // Keep using basic user if profile fetch fails
+            });
           }
         }
       } else {
-        const redirectUrl = makeRedirectUri({
-          scheme: "pitstop",
-          path: "auth/callback",
-        });
+        // Use Supabase's redirect URL format
+        const redirectUrl = Platform.OS === "web"
+          ? `${window.location.origin}/auth/callback`
+          : makeRedirectUri({
+              scheme: "pitstop",
+              path: "auth/callback",
+            });
 
         const { data, error } = await supabaseClient.auth.signInWithOAuth({
           provider: "apple",
@@ -412,20 +438,25 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
               throw exchange.error;
             }
 
-            // Load user profile after successful authentication
+            // Set user immediately from session (don't wait for profile)
             if (exchange.data.user) {
-              const profileUser = await fetchProfileById(exchange.data.user.id);
-              if (profileUser) {
-                setUser(profileUser);
-              } else {
-                const basicUser = buildUserFromSession({
-                  id: exchange.data.user.id,
-                  email: exchange.data.user.email || "",
-                  displayName: exchange.data.user.user_metadata?.full_name || exchange.data.user.user_metadata?.name || exchange.data.user.email?.split("@")[0] || "User",
-                  avatarUrl: exchange.data.user.user_metadata?.avatar_url || null,
-                });
-                setUser(basicUser);
-              }
+              const basicUser = buildUserFromSession({
+                id: exchange.data.user.id,
+                email: exchange.data.user.email || "",
+                displayName: exchange.data.user.user_metadata?.full_name || exchange.data.user.user_metadata?.name || exchange.data.user.email?.split("@")[0] || "User",
+                avatarUrl: exchange.data.user.user_metadata?.avatar_url || null,
+              });
+              setUser(basicUser);
+
+              // Fetch profile in background (non-blocking)
+              fetchProfileById(exchange.data.user.id).then((profileUser) => {
+                if (profileUser) {
+                  setUser(profileUser);
+                }
+              }).catch((err) => {
+                console.error("[AuthContext] Background profile fetch failed", err);
+                // Keep using basic user if profile fetch fails
+              });
             }
           }
         }
@@ -522,8 +553,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       }
 
       if (authData.user) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        await supabaseClient
+        // Update profile in background (non-blocking)
+        supabaseClient
           .from("profiles")
           .update({
             full_name: data.fullName,
@@ -533,7 +564,13 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
             team_number: data.teamNumber,
             school_name: data.teamName,
           })
-          .eq("id", authData.user.id);
+          .eq("id", authData.user.id)
+          .then(() => {
+            console.log("[AuthContext] Profile updated successfully");
+          })
+          .catch((err) => {
+            console.error("[AuthContext] Profile update failed", err);
+          });
       }
 
       setPendingSignUp(data);
