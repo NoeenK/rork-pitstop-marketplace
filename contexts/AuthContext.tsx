@@ -291,10 +291,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       // For web: use Supabase's callback URL
       const redirectUri = Platform.OS === "web" 
         ? `${window.location.origin}/auth/callback`
-        : makeRedirectUri({
-            scheme: "pitstop",
-            path: "auth/google-callback",
-          });
+        : "pitstop://auth/google-callback";
 
       console.log("[AuthContext] Redirect URI:", redirectUri);
 
@@ -330,38 +327,35 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
             showInRecents: true,
           }
         );
-        console.log("[AuthContext] Google OAuth session result:", result);
+        console.log("[AuthContext] Google OAuth session result:", result.type, result);
 
         if (result.type === "success" && result.url) {
           console.log("[AuthContext] Success - completing sign in with URL:", result.url);
-          return await completeGoogleSignIn(result.url);
+          try {
+            return await completeGoogleSignIn(result.url);
+          } catch (err) {
+            console.error("[AuthContext] Failed to complete sign in:", err);
+            throw err;
+          }
         }
 
         if (result.type === "cancel") {
           console.log("[AuthContext] Google OAuth cancelled by user");
-          const cancelError = new Error("cancelled");
-          throw cancelError;
+          return null;
         }
 
         if (result.type === "dismiss") {
           console.log("[AuthContext] Google OAuth dismissed by user");
-          const dismissError = new Error("cancelled");
-          throw dismissError;
+          return null;
         }
 
         console.error("[AuthContext] Unexpected result type:", result.type);
-        throw new Error("Authentication failed or was cancelled");
+        return null;
       }
 
       throw new Error("No OAuth URL received from Supabase");
     } catch (error: any) {
       console.error("[AuthContext] Google OAuth failed", error);
-      
-      // Don't throw if user cancelled
-      if (error?.message?.includes('cancelled')) {
-        return null;
-      }
-      
       throw error;
     } finally {
       setIsLoading(false);
