@@ -299,7 +299,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         provider: "google",
         options: {
           redirectTo: redirectUri,
-          skipBrowserRedirect: Platform.OS === "web",
+          skipBrowserRedirect: false, // Let browser handle redirect
           queryParams: {
             prompt: 'select_account',
           },
@@ -313,6 +313,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
       if (Platform.OS === "web" && data.url) {
         // For web, redirect directly
+        console.log("[AuthContext] Redirecting to:", data.url);
         window.location.href = data.url;
         return null;
       }

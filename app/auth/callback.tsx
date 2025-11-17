@@ -25,28 +25,38 @@ export default function AuthCallbackScreen() {
       try {
         setIsProcessing(true);
         
-        // For web, Supabase might handle the callback automatically
-        // But we'll also try to extract and process it manually
         if (Platform.OS === "web") {
-          const currentUrl = window.location.href;
-          console.log("[AuthCallbackScreen] Processing web callback:", currentUrl);
+          console.log("[AuthCallbackScreen] Processing web callback");
           
-          // Check if there's a code in the URL
-          const urlObj = new URL(currentUrl);
-          const code = urlObj.searchParams.get("code");
+          // For web, Supabase's detectSessionInUrl handles the callback automatically
+          // We just need to wait for the session and then redirect
+          let attempts = 0;
+          const maxAttempts = 10;
           
-          if (code) {
-            // Use the completeGoogleSignIn function
-            await completeGoogleSignIn(currentUrl);
-          } else {
-            // Supabase might have already handled it, check session
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) {
-              throw new Error("No session found after OAuth callback");
+          while (attempts < maxAttempts) {
+            const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+            
+            if (sessionError) {
+              console.error("[AuthCallbackScreen] Session error:", sessionError);
+              throw sessionError;
             }
+            
+            if (session) {
+              console.log("[AuthCallbackScreen] Session found, redirecting...");
+              if (isMounted) {
+                router.replace("/(tabs)/(home)");
+              }
+              return;
+            }
+            
+            // Wait 500ms before checking again
+            await new Promise(resolve => setTimeout(resolve, 500));
+            attempts++;
           }
+          
+          throw new Error("Session not established after OAuth callback");
         } else {
-          // For mobile, build callback URL from params
+          // For mobile, build callback URL from params and exchange code
           const searchParams = new URLSearchParams();
           Object.entries(params).forEach(([key, value]) => {
             if (Array.isArray(value)) {
@@ -60,17 +70,15 @@ export default function AuthCallbackScreen() {
             }
           });
           const callbackUrl = `pitstop://auth/callback?${searchParams.toString()}`;
+          console.log("[AuthCallbackScreen] Processing mobile callback:", callbackUrl);
           await completeGoogleSignIn(callbackUrl);
+          
+          if (isMounted) {
+            router.replace("/(tabs)/(home)");
+          }
         }
-        
-        if (!isMounted) {
-          return;
-        }
-
-        // Navigate immediately after session is created
-        router.replace("/(tabs)/(home)");
       } catch (err: any) {
-        console.error("[AuthCallbackScreen]", err);
+        console.error("[AuthCallbackScreen] Error:", err);
         if (!isMounted) {
           return;
         }
@@ -84,7 +92,8 @@ export default function AuthCallbackScreen() {
 
     // Add timeout to prevent infinite loading
     timeoutId = setTimeout(() => {
-      if (isMounted && !error) {
+      if (isMounted && isProcessing) {
+        console.warn("[AuthCallbackScreen] Timeout reached");
         setError("Authentication is taking longer than expected. Please try again.");
         setIsProcessing(false);
       }
@@ -98,7 +107,7 @@ export default function AuthCallbackScreen() {
         clearTimeout(timeoutId);
       }
     };
-  }, [completeGoogleSignIn, router, params, error]);
+  }, [completeGoogleSignIn, router, params]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
