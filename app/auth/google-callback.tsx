@@ -44,9 +44,14 @@ export default function GoogleCallbackScreen() {
         if (Platform.OS === "web") {
           // For web, use the actual browser URL
           callbackUrl = window.location.href;
+          console.log("[GoogleCallbackScreen] Web callback URL:", callbackUrl);
+          console.log("[GoogleCallbackScreen] window.location.search:", window.location.search);
+          console.log("[GoogleCallbackScreen] window.location.hash:", window.location.hash);
         } else {
-          // For mobile, use deep link
+          // For mobile, use deep link with all params
           callbackUrl = `pitstop://auth/google-callback?${searchString}`;
+          console.log("[GoogleCallbackScreen] Mobile callback URL:", callbackUrl);
+          console.log("[GoogleCallbackScreen] params:", JSON.stringify(params, null, 2));
         }
         
         console.log("[GoogleCallbackScreen] Processing callback URL:", callbackUrl);
@@ -59,7 +64,8 @@ export default function GoogleCallbackScreen() {
         // Navigate immediately after session is created (don't wait for profile)
         router.replace("/(tabs)/(home)");
       } catch (err: any) {
-        console.error("[GoogleCallbackScreen]", err);
+        console.error("[GoogleCallbackScreen] Error:", err);
+        console.error("[GoogleCallbackScreen] Error details:", JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
         if (!isMounted) {
           return;
         }
