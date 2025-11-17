@@ -190,14 +190,94 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
   const completeGoogleSignIn = useCallback(async (url: string) => {
     try {
+      console.log("[AuthContext] completeGoogleSignIn - full URL:", url);
+      
+      // First check if we already have a session (might be set by detectSessionInUrl)
+      const { data: { session: existingSession } } = await supabaseClient.auth.getSession();
+      if (existingSession) {
+        console.log("[AuthContext] Session already exists, using it");
+        const basicUser = buildUserFromSession({
+          id: existingSession.user.id,
+          email: existingSession.user.email || "",
+          displayName: existingSession.user.user_metadata?.full_name || existingSession.user.user_metadata?.name || existingSession.user.email?.split("@")[0] || "User",
+          avatarUrl: existingSession.user.user_metadata?.avatar_url || null,
+        });
+        setUser(basicUser);
+
+        // Fetch profile in background
+        fetchProfileById(existingSession.user.id).then((profileUser) => {
+          if (profileUser) {
+            setUser(profileUser);
+          }
+        }).catch((err) => {
+          console.error("[AuthContext] Background profile fetch failed", err);
+        });
+
+        return basicUser;
+      }
+      
       // Extract the code from the callback URL
       // Handle both full URLs and URL fragments
       let code: string | null = null;
       
       try {
         const urlObj = new URL(url);
-        code = urlObj.searchParams.get("code") || urlObj.hash.match(/code=([^&]+)/)?.[1] || null;
-      } catch {
+        console.log("[AuthContext] URL search params:", urlObj.searchParams.toString());
+        console.log("[AuthContext] URL hash:", urlObj.hash);
+        
+        // Check query parameters first
+        code = urlObj.searchParams.get("code");
+        
+        // If not in query params, check hash fragment
+        if (!code && urlObj.hash) {
+          const hashMatch = urlObj.hash.match(/[#&]code=([^&]+)/);
+          if (hashMatch) {
+            code = decodeURIComponent(hashMatch[1]);
+          }
+        }
+        
+        // Also check for access_token (implicit flow fallback)
+        if (!code) {
+          const accessToken = urlObj.searchParams.get("access_token") || 
+            (urlObj.hash.match(/[#&]access_token=([^&]+)/)?.[1]);
+          const refreshToken = urlObj.searchParams.get("refresh_token") || 
+            (urlObj.hash.match(/[#&]refresh_token=([^&]+)/)?.[1]);
+          
+          if (accessToken && refreshToken) {
+            console.log("[AuthContext] Found tokens in URL, using setSession");
+            const { data, error } = await supabaseClient.auth.setSession({
+              access_token: decodeURIComponent(accessToken),
+              refresh_token: decodeURIComponent(refreshToken),
+            });
+            
+            if (error) {
+              console.error("[AuthContext] Failed to set session from tokens", error);
+              throw error;
+            }
+            
+            if (data.user) {
+              const basicUser = buildUserFromSession({
+                id: data.user.id,
+                email: data.user.email || "",
+                displayName: data.user.user_metadata?.full_name || data.user.user_metadata?.name || data.user.email?.split("@")[0] || "User",
+                avatarUrl: data.user.user_metadata?.avatar_url || null,
+              });
+              setUser(basicUser);
+
+              fetchProfileById(data.user.id).then((profileUser) => {
+                if (profileUser) {
+                  setUser(profileUser);
+                }
+              }).catch((err) => {
+                console.error("[AuthContext] Background profile fetch failed", err);
+              });
+
+              return basicUser;
+            }
+          }
+        }
+      } catch (error) {
+        console.log("[AuthContext] URL parsing failed, trying direct extraction", error);
         // If URL parsing fails, try to extract from the string directly
         const codeMatch = url.match(/[?&#]code=([^&]+)/);
         if (codeMatch) {
@@ -205,11 +285,15 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         }
       }
       
+      console.log("[AuthContext] Extracted code:", code ? "Found" : "Missing");
+      
       if (!code) {
+        console.error("[AuthContext] No code or tokens found in URL. Full URL:", url);
         throw new Error("Missing authorization code from Google OAuth callback.");
       }
 
       // Exchange the code for a session
+      console.log("[AuthContext] Exchanging code for session");
       const { data, error } = await supabaseClient.auth.exchangeCodeForSession(code);
 
       if (error) {
