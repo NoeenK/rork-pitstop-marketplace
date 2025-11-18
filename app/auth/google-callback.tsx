@@ -45,27 +45,24 @@ export default function GoogleCallbackScreen() {
           // For web, use the actual browser URL
           callbackUrl = window.location.href;
           console.log("[GoogleCallbackScreen] Web callback URL:", callbackUrl);
-          console.log("[GoogleCallbackScreen] window.location.search:", window.location.search);
-          console.log("[GoogleCallbackScreen] window.location.hash:", window.location.hash);
         } else {
           // For mobile, use deep link with all params
           callbackUrl = `pitstop://auth/google-callback?${searchString}`;
           console.log("[GoogleCallbackScreen] Mobile callback URL:", callbackUrl);
-          console.log("[GoogleCallbackScreen] params:", JSON.stringify(params, null, 2));
         }
         
-        console.log("[GoogleCallbackScreen] Processing callback URL:", callbackUrl);
+        console.log("[GoogleCallbackScreen] Processing callback URL");
         await completeGoogleSignIn(callbackUrl);
         
         if (!isMounted) {
           return;
         }
 
-        // Navigate immediately after session is created (don't wait for profile)
+        // Navigate immediately after session is created
+        console.log("[GoogleCallbackScreen] Sign in complete, redirecting...");
         router.replace("/(tabs)/(home)");
       } catch (err: any) {
         console.error("[GoogleCallbackScreen] Error:", err);
-        console.error("[GoogleCallbackScreen] Error details:", JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
         if (!isMounted) {
           return;
         }
@@ -76,9 +73,10 @@ export default function GoogleCallbackScreen() {
     // Add timeout to prevent infinite loading
     timeoutId = setTimeout(() => {
       if (isMounted && !error) {
+        console.warn("[GoogleCallbackScreen] Timeout reached");
         setError("Sign in is taking longer than expected. Please try again.");
       }
-    }, 15000); // 15 second timeout
+    }, 10000); // 10 second timeout
 
     finalize();
 

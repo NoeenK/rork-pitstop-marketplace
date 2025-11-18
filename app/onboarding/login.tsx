@@ -44,8 +44,11 @@ export default function LoginScreen() {
     if (isLoading) return;
     try {
       setIsLoading(true);
+      console.log("[LoginScreen] Starting Google sign in...");
       const result = await signInWithGoogle();
+      console.log("[LoginScreen] Google sign in result:", result ? "Success" : "Cancelled");
       if (result) {
+        console.log("[LoginScreen] Redirecting to home...");
         router.replace("/(tabs)/(home)");
       }
     } catch (error: any) {
