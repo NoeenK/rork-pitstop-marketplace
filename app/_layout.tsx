@@ -42,6 +42,8 @@ function RootLayoutNav() {
       <Stack.Screen name="onboarding/welcome" options={{ headerShown: false, animation: "slide_from_right" }} />
       <Stack.Screen name="onboarding/consent" options={{ headerShown: false, animation: "slide_from_right" }} />
       <Stack.Screen name="welcome" options={{ headerShown: false, animation: "fade" }} />
+      <Stack.Screen name="auth/callback" options={{ headerShown: false, animation: "fade" }} />
+      <Stack.Screen name="auth/google-callback" options={{ headerShown: false, animation: "fade" }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen 
         name="listing/[id]" 

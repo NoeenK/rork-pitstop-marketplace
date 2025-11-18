@@ -28,30 +28,34 @@ export default function AuthCallbackScreen() {
         if (Platform.OS === "web") {
           console.log("[AuthCallbackScreen] Processing web callback");
           
-          // For web, Supabase's detectSessionInUrl handles the callback automatically
-          // We just need to wait for the session and then redirect
-          let attempts = 0;
-          const maxAttempts = 10;
+          // For web, check if session is already available (Supabase auto-detects)
+          await new Promise(resolve => setTimeout(resolve, 100));
+          const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
           
-          while (attempts < maxAttempts) {
-            const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
-            
-            if (sessionError) {
-              console.error("[AuthCallbackScreen] Session error:", sessionError);
-              throw sessionError;
+          if (sessionError) {
+            console.error("[AuthCallbackScreen] Session error:", sessionError);
+            throw sessionError;
+          }
+          
+          if (session) {
+            console.log("[AuthCallbackScreen] Session found, redirecting...");
+            if (isMounted) {
+              router.replace("/(tabs)/(home)");
             }
-            
-            if (session) {
-              console.log("[AuthCallbackScreen] Session found, redirecting...");
-              if (isMounted) {
-                router.replace("/(tabs)/(home)");
-              }
-              return;
+            return;
+          }
+          
+          console.log("[AuthCallbackScreen] No session yet, waiting...");
+          // If no session yet, wait a bit more (Supabase is processing)
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          const { data: { session: session2 } } = await supabaseClient.auth.getSession();
+          
+          if (session2) {
+            console.log("[AuthCallbackScreen] Session found after wait, redirecting...");
+            if (isMounted) {
+              router.replace("/(tabs)/(home)");
             }
-            
-            // Wait 500ms before checking again
-            await new Promise(resolve => setTimeout(resolve, 500));
-            attempts++;
+            return;
           }
           
           throw new Error("Session not established after OAuth callback");
@@ -97,7 +101,7 @@ export default function AuthCallbackScreen() {
         setError("Authentication is taking longer than expected. Please try again.");
         setIsProcessing(false);
       }
-    }, 15000); // 15 second timeout
+    }, 10000); // 10 second timeout
 
     finalize();
 
