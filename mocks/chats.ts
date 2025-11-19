@@ -1,0 +1,373 @@
+import { ChatThread, Message } from "@/types";
+import { mockListings, mockUsers } from "./listings";
+
+const THREAD_ID_1 = "550e8400-e29b-41d4-a716-446655440001";
+const THREAD_ID_2 = "550e8400-e29b-41d4-a716-446655440002";
+const THREAD_ID_3 = "550e8400-e29b-41d4-a716-446655440003";
+const THREAD_ID_4 = "550e8400-e29b-41d4-a716-446655440004";
+const THREAD_ID_5 = "550e8400-e29b-41d4-a716-446655440005";
+const THREAD_ID_6 = "550e8400-e29b-41d4-a716-446655440006";
+
+export const mockChatThreads: ChatThread[] = [
+  {
+    id: THREAD_ID_1,
+    listingId: "1",
+    listing: mockListings[0],
+    buyerId: "user_current",
+    sellerId: "user1",
+    seller: mockUsers[0],
+    lastMessageAt: new Date(Date.now() - 1000 * 60 * 5),
+    unreadCount: 1,
+  },
+  {
+    id: THREAD_ID_2,
+    listingId: "2",
+    listing: mockListings[1],
+    buyerId: "user_current",
+    sellerId: "user2",
+    seller: mockUsers[1],
+    lastMessageAt: new Date(Date.now() - 1000 * 60 * 30),
+    unreadCount: 0,
+  },
+  {
+    id: THREAD_ID_3,
+    listingId: "7",
+    listing: mockListings.find(l => l.id === "7"),
+    buyerId: "user_current",
+    sellerId: "user4",
+    seller: mockUsers[3],
+    lastMessageAt: new Date(Date.now() - 1000 * 60 * 60 * 2),
+    unreadCount: 0,
+  },
+  {
+    id: THREAD_ID_4,
+    listingId: "4",
+    listing: mockListings.find(l => l.id === "4"),
+    buyerId: "user_current",
+    sellerId: "user3",
+    seller: mockUsers[2],
+    lastMessageAt: new Date(Date.now() - 1000 * 60 * 60 * 5),
+    unreadCount: 2,
+  },
+  {
+    id: THREAD_ID_5,
+    listingId: "28",
+    listing: mockListings.find(l => l.id === "28"),
+    buyerId: "user_current",
+    sellerId: "user4",
+    seller: mockUsers[3],
+    lastMessageAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
+    unreadCount: 0,
+  },
+  {
+    id: THREAD_ID_6,
+    listingId: "30",
+    listing: mockListings.find(l => l.id === "30"),
+    buyerId: "user_current",
+    sellerId: "user2",
+    seller: mockUsers[1],
+    lastMessageAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
+    unreadCount: 0,
+  },
+];
+
+export const mockMessages: Record<string, Message[]> = {
+  [THREAD_ID_1]: [
+    {
+      id: "650e8400-e29b-41d4-a716-446655440001",
+      threadId: THREAD_ID_1,
+      senderId: "user_current",
+      text: "Hi! Is this still available?",
+      createdAt: new Date(Date.now() - 1000 * 60 * 15),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440002",
+      threadId: THREAD_ID_1,
+      senderId: "user1",
+      text: "Yes, still available! All four modules in great condition.",
+      createdAt: new Date(Date.now() - 1000 * 60 * 14),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440003",
+      threadId: THREAD_ID_1,
+      senderId: "user_current",
+      text: "Great! How long have you used them?",
+      createdAt: new Date(Date.now() - 1000 * 60 * 13),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440004",
+      threadId: THREAD_ID_1,
+      senderId: "user1",
+      text: "Just one season. We upgraded our setup",
+      createdAt: new Date(Date.now() - 1000 * 60 * 12),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440005",
+      threadId: THREAD_ID_1,
+      senderId: "user1",
+      text: "They're still under warranty too",
+      createdAt: new Date(Date.now() - 1000 * 60 * 12),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440006",
+      threadId: THREAD_ID_1,
+      senderId: "user_current",
+      text: "Would you consider $160?",
+      createdAt: new Date(Date.now() - 1000 * 60 * 10),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440007",
+      threadId: THREAD_ID_1,
+      senderId: "user1",
+      text: "I could do $170. These are barely used and in perfect condition.",
+      createdAt: new Date(Date.now() - 1000 * 60 * 8),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440008",
+      threadId: THREAD_ID_1,
+      senderId: "user_current",
+      text: "Deal! When can I pick them up?",
+      createdAt: new Date(Date.now() - 1000 * 60 * 7),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440009",
+      threadId: THREAD_ID_1,
+      senderId: "user1",
+      text: "This weekend works for me. Saturday afternoon?",
+      createdAt: new Date(Date.now() - 1000 * 60 * 5),
+    },
+  ],
+  [THREAD_ID_2]: [
+    {
+      id: "650e8400-e29b-41d4-a716-446655440010",
+      threadId: THREAD_ID_2,
+      senderId: "user_current",
+      text: "Hey, interested in the NEO motors. Can you ship to Toronto?",
+      createdAt: new Date(Date.now() - 1000 * 60 * 65),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440011",
+      threadId: THREAD_ID_2,
+      senderId: "user2",
+      text: "Yes! I can ship. Shipping would be about $15.",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440012",
+      threadId: THREAD_ID_2,
+      senderId: "user_current",
+      text: "Sounds good. Do they come with cables?",
+      createdAt: new Date(Date.now() - 1000 * 60 * 55),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440013",
+      threadId: THREAD_ID_2,
+      senderId: "user2",
+      text: "Yes, all original cables and connectors included",
+      createdAt: new Date(Date.now() - 1000 * 60 * 50),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440014",
+      threadId: THREAD_ID_2,
+      senderId: "user_current",
+      text: "Perfect! Can you send me your PayPal?",
+      createdAt: new Date(Date.now() - 1000 * 60 * 45),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440015",
+      threadId: THREAD_ID_2,
+      senderId: "user2",
+      text: "Sure, it's team1234@paypal.com",
+      createdAt: new Date(Date.now() - 1000 * 60 * 40),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440016",
+      threadId: THREAD_ID_2,
+      senderId: "user_current",
+      text: "Just sent the payment!",
+      createdAt: new Date(Date.now() - 1000 * 60 * 35),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440017",
+      threadId: THREAD_ID_2,
+      senderId: "user2",
+      text: "Received! I'll ship them out tomorrow and send you tracking 📦",
+      createdAt: new Date(Date.now() - 1000 * 60 * 30),
+    },
+  ],
+  [THREAD_ID_3]: [
+    {
+      id: "650e8400-e29b-41d4-a716-446655440018",
+      threadId: THREAD_ID_3,
+      senderId: "user_current",
+      text: "Is the Limelight compatible with 2024 rio?",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440019",
+      threadId: THREAD_ID_3,
+      senderId: "user4",
+      text: "Yes! Works perfectly with the 2024 roboRIO. We used it all season.",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2.9),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440020",
+      threadId: THREAD_ID_3,
+      senderId: "user_current",
+      text: "Does it include the mounting bracket?",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2.7),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440021",
+      threadId: THREAD_ID_3,
+      senderId: "user4",
+      text: "Yep, mounting bracket and all cables included!",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2.5),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440022",
+      threadId: THREAD_ID_3,
+      senderId: "user_current",
+      text: "Awesome! What vision processing were you doing with it?",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2.3),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440023",
+      threadId: THREAD_ID_3,
+      senderId: "user4",
+      text: "AprilTag tracking mostly. Works great for autonomous",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2),
+    },
+  ],
+  [THREAD_ID_4]: [
+    {
+      id: "650e8400-e29b-41d4-a716-446655440024",
+      threadId: THREAD_ID_4,
+      senderId: "user_current",
+      text: "Hi! Do the mecanum wheels have good traction?",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6.5),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440025",
+      threadId: THREAD_ID_4,
+      senderId: "user3",
+      text: "Yes they do! We had no issues with traction this season.",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6.2),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440026",
+      threadId: THREAD_ID_4,
+      senderId: "user3",
+      text: "Also includes all the mounting hardware you need.",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6.1),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440027",
+      threadId: THREAD_ID_4,
+      senderId: "user_current",
+      text: "Are the rollers still in good condition?",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5.8),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440028",
+      threadId: THREAD_ID_4,
+      senderId: "user3",
+      text: "Yeah, barely any wear. We only used them for one comp season",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5.5),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440029",
+      threadId: THREAD_ID_4,
+      senderId: "user_current",
+      text: "I'm interested! Can I see more pics?",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5.2),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440030",
+      threadId: THREAD_ID_4,
+      senderId: "user3",
+      text: "Sure, let me take some close-ups of the rollers [Image: https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=800]",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5),
+    },
+  ],
+  [THREAD_ID_5]: [
+    {
+      id: "650e8400-e29b-41d4-a716-446655440031",
+      threadId: THREAD_ID_5,
+      senderId: "user_current",
+      text: "Interested in all 4 Falcon 500s. Would you do $260?",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 30),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440032",
+      threadId: THREAD_ID_5,
+      senderId: "user4",
+      text: "These are in excellent condition. Could meet you at $270.",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 28),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440033",
+      threadId: THREAD_ID_5,
+      senderId: "user_current",
+      text: "Deal! When can I pick them up?",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 27),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440034",
+      threadId: THREAD_ID_5,
+      senderId: "user4",
+      text: "This weekend works for me. Saturday afternoon?",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 26),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440035",
+      threadId: THREAD_ID_5,
+      senderId: "user_current",
+      text: "Saturday at 2pm works!",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 25),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440036",
+      threadId: THREAD_ID_5,
+      senderId: "user4",
+      text: "Perfect! I'll send you my address",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
+    },
+  ],
+  [THREAD_ID_6]: [
+    {
+      id: "650e8400-e29b-41d4-a716-446655440037",
+      threadId: THREAD_ID_6,
+      senderId: "user_current",
+      text: "Is the pneumatic kit complete with all fittings?",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 52),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440038",
+      threadId: THREAD_ID_6,
+      senderId: "user2",
+      text: "Yes! Everything you need is included. Compressor, cylinders, solenoids, and all tubing/fittings.",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 50),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440039",
+      threadId: THREAD_ID_6,
+      senderId: "user_current",
+      text: "How many cylinders?",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 49),
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440040",
+      threadId: THREAD_ID_6,
+      senderId: "user2",
+      text: "Two double-acting cylinders",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48),
+    },
+  ],
+};
+
+export function getLastMessagePreview(threadId: string): string {
+  const messages = mockMessages[threadId];
+  if (!messages || messages.length === 0) return "No messages yet";
+  return messages[messages.length - 1].text;
+}
