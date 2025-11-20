@@ -76,11 +76,11 @@ export default function ProfileScreen() {
                   contentFit="cover"
                 />
               ) : (
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {user.displayName.charAt(0).toUpperCase()}
-              </Text>
-            </View>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {user.displayName?.charAt(0)?.toUpperCase() || 'U'}
+                  </Text>
+                </View>
               )}
             </TouchableOpacity>
             <View style={styles.profileDetails}>
@@ -91,6 +91,11 @@ export default function ProfileScreen() {
                   <Text style={styles.badgeCount}>10</Text>
                 </View>
               </View>
+              {!user.avatarUrl && (
+                <Text style={[styles.avatarHint, { color: colors.textSecondary }]}>
+                  Tap avatar to upload photo
+                </Text>
+              )}
             </View>
           </View>
           <ChevronRight size={24} color={colors.textSecondary} />
@@ -472,5 +477,10 @@ const createStyles = (colors: any, insets: { top: number }) => StyleSheet.create
     height: 0.5,
     backgroundColor: colors.border,
     marginLeft: 52,
+  },
+  avatarHint: {
+    fontSize: 12,
+    fontWeight: "400" as const,
+    marginTop: 4,
   },
 });
