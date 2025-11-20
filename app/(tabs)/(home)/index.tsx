@@ -84,14 +84,22 @@ export default function HomeScreen() {
               style={styles.userInfo}
               onPress={() => router.push("/profile/settings")}
             >
-              <Image
-                source={{ uri: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop" }}
-                style={styles.avatar}
-              />
+              {user?.avatarUrl ? (
+                <Image
+                  source={{ uri: user.avatarUrl }}
+                  style={styles.avatar}
+                />
+              ) : (
+                <View style={[styles.avatar, { backgroundColor: colors.accent, justifyContent: 'center', alignItems: 'center' }]}>
+                  <Text style={{ fontSize: 22, fontWeight: '700' as const, color: '#FFFFFF' }}>
+                    {user?.displayName?.charAt(0)?.toUpperCase() || user?.username?.charAt(0)?.toUpperCase() || 'U'}
+                  </Text>
+                </View>
+              )}
               <View>
                 <Text style={styles.welcomeText}>Welcome back !</Text>
                 <Text style={[styles.userName, { color: colors.text }]}>
-                  {user?.displayName?.split(' ')[0] || user?.username || "Evan"}
+                  {user?.displayName?.split(' ')[0] || user?.username || "User"}
                 </Text>
               </View>
             </TouchableOpacity>
