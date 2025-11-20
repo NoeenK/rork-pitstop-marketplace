@@ -269,6 +269,14 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
       if (signUpError) {
         console.error("[AuthContext] Sign up failed", signUpError);
+        
+        // Provide better error messages
+        if (signUpError.message?.includes("already registered") || signUpError.message?.includes("User already exists")) {
+          const friendlyError = new Error("This email is already registered. Please log in instead.");
+          (friendlyError as any).code = "USER_ALREADY_EXISTS";
+          throw friendlyError;
+        }
+        
         throw signUpError;
       }
 
