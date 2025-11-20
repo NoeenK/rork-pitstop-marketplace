@@ -62,10 +62,26 @@ export default function SignUpEmailScreen() {
       router.replace("/(tabs)/(home)");
     } catch (error: any) {
       console.error("[SignUp] Failed to sign up:", error);
-      Alert.alert(
-        "Sign Up Failed",
-        error?.message || "Failed to create account. Please try again."
-      );
+      
+      // Handle user already exists error
+      if (error?.code === "USER_ALREADY_EXISTS" || error?.message?.includes("already registered")) {
+        Alert.alert(
+          "Account Already Exists",
+          "This email is already registered. Would you like to log in instead?",
+          [
+            { text: "Cancel", style: "cancel" },
+            { 
+              text: "Log In", 
+              onPress: () => router.push("/onboarding/login")
+            }
+          ]
+        );
+      } else {
+        Alert.alert(
+          "Sign Up Failed",
+          error?.message || "Failed to create account. Please try again."
+        );
+      }
     } finally {
       setIsLoading(false);
     }
