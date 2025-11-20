@@ -14,10 +14,10 @@ export default function LoginScreen() {
   const { signIn, resetPassword } = useAuth();
   const { colors, isDark } = useTheme();
 
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const isValid = email && password;
 
@@ -72,27 +72,8 @@ export default function LoginScreen() {
     }
   };
 
-  if (isDark) {
-    return (
-      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
-        {renderContent()}
-      </View>
-    );
-  }
-
-  return (
-    <LinearGradient
-      colors={[colors.primaryGradientStart, colors.primaryGradientEnd]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
-      style={[styles.container, { paddingTop: insets.top }]}
-    >
-      {renderContent()}
-    </LinearGradient>
-  );
-
-  function renderContent() {
-    return (<>
+  const renderContent = () => (
+    <>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ChevronLeft size={24} color={Colors.text} />
@@ -155,8 +136,27 @@ export default function LoginScreen() {
         </View>
         </ScrollView>
       </TouchableWithoutFeedback>
-    </>);
+    </>
+  );
+
+  if (isDark) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
+        {renderContent()}
+      </View>
+    );
   }
+
+  return (
+    <LinearGradient
+      colors={[colors.primaryGradientStart, colors.primaryGradientEnd]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={[styles.container, { paddingTop: insets.top }]}
+    >
+      {renderContent()}
+    </LinearGradient>
+  );
 }
 
 const styles = StyleSheet.create({
