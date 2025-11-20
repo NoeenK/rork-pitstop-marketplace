@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, ScrollView, Alert, Keyboard, TouchableWithoutFeedback, Platform, KeyboardAvoidingView } from "react-native";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, ScrollView, Alert, Keyboard, TouchableWithoutFeedback, Platform, KeyboardAvoidingView, LayoutChangeEvent } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useState, useEffect, useRef } from "react";
@@ -13,25 +13,25 @@ export default function WelcomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { pendingOAuthUser } = useAuth();
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [fullName, setFullName] = useState<string>("");
-  const [phoneNumber, setPhoneNumber] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [isOAuthUser, setIsOAuthUser] = useState<boolean>(false);
-  const [teamSearch, setTeamSearch] = useState<string>("");
-  const [selectedTeam, setSelectedTeam] = useState<TBATeamSimple | null>(null);
-  const [teamResults, setTeamResults] = useState<TBATeamSimple[]>([]);
-  const [showTeamDropdown, setShowTeamDropdown] = useState<boolean>(false);
-  const [isTeamInputFocused, setIsTeamInputFocused] = useState<boolean>(false);
-  const teamInputRef = useRef<TextInput>(null);
-  const [passwordInputHeight, setPasswordInputHeight] = useState<number>(0);
+  const [fullName, setFullName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isOAuthUser, setIsOAuthUser] = useState(false);
+  const [teamSearch, setTeamSearch] = useState("");
+  const [selectedTeam, setSelectedTeam] = useState(null as TBATeamSimple | null);
+  const [teamResults, setTeamResults] = useState([] as TBATeamSimple[]);
+  const [showTeamDropdown, setShowTeamDropdown] = useState(false);
+  const [isTeamInputFocused, setIsTeamInputFocused] = useState(false);
+  const teamInputRef = useRef(null);
+  const [passwordInputHeight, setPasswordInputHeight] = useState(0);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const dropdownHeightAnim = useRef(new Animated.Value(0)).current;
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef(null);
   const passwordFieldAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -159,46 +159,90 @@ export default function WelcomeScreen() {
       setIsLoading(true);
       const username = fullName.toLowerCase().replace(/\s+/g, '');
       
-      console.log("[Welcome] Checking for existing user");
-      const { data: { user } } = await supabaseClient.auth.getUser();
-      
-      if (!user) {
-        console.log("[Welcome] No existing user found - this should not happen");
-        Alert.alert("Error", "No user session found. Please start the signup process again.");
+      // Get email from AsyncStorage
+      const storedEmail = await AsyncStorage.getItem("pending_signup_email");
+      if (!storedEmail) {
+        Alert.alert("Error", "Email not found. Please start the signup process again.");
         router.replace("/onboarding/signup-email");
         return;
       }
 
-      const { error: updateError } = await supabaseClient
+      console.log("[Welcome] Creating account for:", storedEmail);
+      
+      // Check if user already exists
+      const { data: { user: existingUser } } = await supabaseClient.auth.getUser();
+      
+      let userId: string;
+      
+      if (!existingUser) {
+        // Create new account (email confirmation disabled in Supabase settings)
+        const { data: authData, error: signUpError } = await supabaseClient.auth.signUp({
+          email: storedEmail,
+          password: password,
+          options: {
+            emailRedirectTo: undefined,
+            data: {
+              full_name: fullName.trim(),
+              display_name: fullName.trim(),
+              username,
+              phone_number: phoneNumber.trim(),
+              team_number: selectedTeam.team_number,
+              team_name: selectedTeam.nickname,
+            },
+          },
+        });
+
+        if (signUpError) {
+          console.error("[Welcome] Sign up error:", signUpError);
+          Alert.alert("Error", signUpError.message || "Failed to create account. Please try again.");
+          return;
+        }
+
+        if (!authData.user) {
+          Alert.alert("Error", "Account creation failed. Please try again.");
+          return;
+        }
+
+        userId = authData.user.id;
+        console.log("[Welcome] Account created successfully:", userId);
+      } else {
+        // User already exists (from OAuth or previous signup)
+        userId = existingUser.id;
+        console.log("[Welcome] Using existing user:", userId);
+        
+        // Update password if provided
+        if (!isOAuthUser && password) {
+          const { error: passwordError } = await supabaseClient.auth.updateUser({
+            password,
+          });
+
+          if (passwordError) {
+            console.error("[Welcome] Password update error:", passwordError);
+            // Don't fail if password update fails, continue with profile update
+          }
+        }
+      }
+
+      // Update or create profile
+      const { error: profileError } = await supabaseClient
         .from('profiles')
-        .update({
+        .upsert({
+          id: userId,
+          email: storedEmail,
           full_name: fullName.trim(),
           display_name: fullName.trim(),
           username,
           phone_number: phoneNumber.trim(),
           team_number: selectedTeam.team_number,
           school_name: selectedTeam.nickname,
-        })
-        .eq('id', user.id);
-
-      if (updateError) {
-        console.error("[Welcome] Profile update error:", updateError);
-        Alert.alert("Error", "Failed to update profile. Please try again.");
-        return;
-      }
-
-      if (!isOAuthUser && password) {
-        console.log("[Welcome] Setting password for email user");
-        const { error: passwordError } = await supabaseClient.auth.updateUser({
-          password,
+        }, {
+          onConflict: 'id'
         });
 
-        if (passwordError) {
-          console.error("[Welcome] Password update error:", passwordError);
-          Alert.alert("Error", "Failed to set password. Please try again.");
-          return;
-        }
-        console.log("[Welcome] Password set successfully");
+      if (profileError) {
+        console.error("[Welcome] Profile update error:", profileError);
+        Alert.alert("Error", "Failed to update profile. Please try again.");
+        return;
       }
 
       console.log("[Welcome] Profile setup complete");
@@ -331,7 +375,7 @@ export default function WelcomeScreen() {
                           showsVerticalScrollIndicator={true}
                           nestedScrollEnabled
                         >
-                          {teamResults.map((team) => (
+                          {teamResults.map((team: TBATeamSimple) => (
                             <TouchableOpacity
                               key={team.key}
                               style={styles.teamItem}
@@ -357,7 +401,7 @@ export default function WelcomeScreen() {
                           outputRange: [0, 25],
                         }),
                       }}
-                      onLayout={(event) => {
+                      onLayout={(event: any) => {
                         setPasswordInputHeight(event.nativeEvent.layout.y);
                       }}
                     >

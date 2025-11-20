@@ -1,6 +1,7 @@
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, Stack, useRouter } from "expo-router";
 import { CheckCircle, MapPin, Calendar, Star } from "lucide-react-native";
+import { Image } from "expo-image";
 import { Colors } from "@/constants/colors";
 import { useListings } from "@/contexts/ListingsContext";
 import { useReviews } from "@/contexts/ReviewsContext";
@@ -85,11 +86,19 @@ export default function UserProfileScreen() {
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {profile.displayName.charAt(0).toUpperCase()}
-            </Text>
-          </View>
+          {profile.avatarUrl ? (
+            <Image
+              source={{ uri: profile.avatarUrl }}
+              style={styles.avatar}
+              contentFit="cover"
+            />
+          ) : (
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {profile.displayName.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
 
           <View style={styles.headerInfo}>
             <View style={styles.nameRow}>
