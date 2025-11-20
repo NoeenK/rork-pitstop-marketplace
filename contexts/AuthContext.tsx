@@ -67,11 +67,10 @@ const buildUserFromSession = (sessionUser: SessionUserPayload): User => ({
 });
 
 export const [AuthProvider, useAuth] = createContextHook(() => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean>(false);
-  const [, setPendingSignUp] = useState<SignUpData | null>(null);
-  const [pendingOAuthUser, setPendingOAuthUser] = useState<{ fullName?: string | null } | null>(null);
+  const [user, setUser] = useState(null as User | null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+  const [, setPendingSignUp] = useState(null as SignUpData | null);
 
   const fetchProfileById = useCallback(async (profileId: string) => {
     try {
@@ -128,14 +127,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           });
         }
 
-        if (session?.user?.user_metadata?.full_name) {
-          setPendingOAuthUser({
-            fullName: session.user.user_metadata.full_name,
-          });
-        } else {
-          setPendingOAuthUser(null);
-        }
-
         const storedOnboarding = await AsyncStorage.getItem("onboarding_completed");
         if (storedOnboarding) {
           setHasCompletedOnboarding(true);
@@ -161,13 +152,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           avatarUrl: session.user.user_metadata?.avatar_url || null,
         });
         setUser(basicUser);
-        if (session.user.user_metadata?.full_name) {
-          setPendingOAuthUser({
-            fullName: session.user.user_metadata.full_name,
-          });
-        } else {
-          setPendingOAuthUser(null);
-        }
 
         // Fetch profile in background (non-blocking)
         fetchProfileById(session.user.id).then((profileUser) => {
@@ -182,7 +166,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
       if (event === "SIGNED_OUT") {
         setUser(null);
-        setPendingOAuthUser(null);
       }
     });
 
@@ -291,33 +274,31 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
       if (authData.user) {
         // Update profile in background (non-blocking)
-        supabaseClient
-          .from("profiles")
-          .upsert({
-            id: authData.user.id,
-            email: data.email,
-            full_name: data.fullName,
-            display_name: data.fullName,
-            username: data.username,
-            phone_number: data.phoneNumber,
-            team_number: data.teamNumber,
-            school_name: data.teamName,
-          }, {
-            onConflict: 'id'
-          })
-          .then(() => {
+        (async () => {
+          try {
+            await supabaseClient
+              .from("profiles")
+              .upsert({
+                id: authData.user.id,
+                email: data.email,
+                full_name: data.fullName,
+                display_name: data.fullName,
+                username: data.username,
+                phone_number: data.phoneNumber,
+                team_number: data.teamNumber,
+                school_name: data.teamName,
+              }, {
+                onConflict: 'id'
+              });
             console.log("[AuthContext] Profile updated successfully");
-          })
-          .catch((err) => {
+          } catch (err) {
             console.error("[AuthContext] Profile update failed", err);
-          });
+          }
+        })();
       }
 
       setPendingSignUp(data);
       console.log("[AuthContext] Sign up successful");
-      setPendingOAuthUser({
-        fullName: data.fullName,
-      });
     } catch (error) {
       console.error("[AuthContext] Sign up exception", error);
       throw error;
@@ -409,7 +390,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     updatePassword,
     completeOnboarding,
     updateProfile,
-    pendingOAuthUser,
   }), [
     user,
     isLoading,
@@ -421,6 +401,5 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     updatePassword,
     completeOnboarding,
     updateProfile,
-    pendingOAuthUser,
   ]);
 });
