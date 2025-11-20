@@ -1,21 +1,20 @@
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { Camera, Image as ImageIcon, X } from "lucide-react-native";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { supabaseClient } from "@/lib/supabase";
 import ScreenWrapper from "@/components/ScreenWrapper";
-import { useMemo } from "react";
 
 export default function EditAvatarScreen() {
   const router = useRouter();
   const { user, updateProfile } = useAuth();
   const { colors } = useTheme();
   const [isUploading, setIsUploading] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState(null as string | null);
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -70,17 +69,22 @@ export default function EditAvatarScreen() {
     try {
       setIsUploading(true);
 
-      // Convert image to blob
-      const response = await fetch(selectedImage);
-      const blob = await response.blob();
-      const fileExt = selectedImage.split('.').pop();
+      const fileExt = selectedImage.split('.').pop() || 'jpg';
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
 
-      // Upload to Supabase Storage
+      // Create form data for file upload
+      const formData = new FormData();
+      formData.append('file', {
+        uri: selectedImage,
+        name: fileName,
+        type: `image/${fileExt}`,
+      } as any);
+
+      // Upload to Supabase Storage using FormData
       const { error: uploadError } = await supabaseClient.storage
         .from('avatars')
-        .upload(filePath, blob, {
+        .upload(filePath, formData, {
           contentType: `image/${fileExt}`,
           upsert: true,
         });
@@ -126,7 +130,7 @@ export default function EditAvatarScreen() {
               Alert.alert("Success", "Avatar removed successfully!", [
                 { text: "OK", onPress: () => router.back() }
               ]);
-            } catch (error: any) {
+            } catch {
               Alert.alert("Error", "Failed to remove avatar. Please try again.");
             } finally {
               setIsUploading(false);
