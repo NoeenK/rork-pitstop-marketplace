@@ -3,7 +3,7 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { User } from "@/types";
 import { supabaseClient } from "@/lib/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { generateVerificationCode, sendVerificationEmail, sendVerificationCode } from "@/lib/verification";
+// Email verification removed - accounts created directly without confirmation
 
 interface SignUpData {
   email: string;
@@ -71,6 +71,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean>(false);
   const [, setPendingSignUp] = useState<SignUpData | null>(null);
+  const [pendingOAuthUser, setPendingOAuthUser] = useState<{ fullName?: string | null } | null>(null);
 
   const fetchProfileById = useCallback(async (profileId: string) => {
     try {
@@ -127,6 +128,14 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           });
         }
 
+        if (session?.user?.user_metadata?.full_name) {
+          setPendingOAuthUser({
+            fullName: session.user.user_metadata.full_name,
+          });
+        } else {
+          setPendingOAuthUser(null);
+        }
+
         const storedOnboarding = await AsyncStorage.getItem("onboarding_completed");
         if (storedOnboarding) {
           setHasCompletedOnboarding(true);
@@ -152,6 +161,13 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           avatarUrl: session.user.user_metadata?.avatar_url || null,
         });
         setUser(basicUser);
+        if (session.user.user_metadata?.full_name) {
+          setPendingOAuthUser({
+            fullName: session.user.user_metadata.full_name,
+          });
+        } else {
+          setPendingOAuthUser(null);
+        }
 
         // Fetch profile in background (non-blocking)
         fetchProfileById(session.user.id).then((profileUser) => {
@@ -166,6 +182,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
       if (event === "SIGNED_OUT") {
         setUser(null);
+        setPendingOAuthUser(null);
       }
     });
 
@@ -228,12 +245,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
       const { error } = await supabaseClient.auth.updateUser({
         password: newPassword,
-      });
+          });
 
-      if (error) {
+          if (error) {
         console.error("[AuthContext] Password update failed", error);
-        throw error;
-      }
+            throw error;
+          }
 
       console.log("[AuthContext] Password updated successfully");
     } catch (error) {
@@ -249,9 +266,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       setIsLoading(true);
       console.log("[AuthContext] Signing up", data.email);
 
-      const code = await generateVerificationCode(data.email);
-      await sendVerificationEmail(data.email, code);
-
+      // Create account directly without email verification
+      // Email confirmation should be disabled in Supabase settings
       const { data: authData, error: signUpError } = await supabaseClient.auth.signUp({
         email: data.email,
         password: data.password,
@@ -277,15 +293,18 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         // Update profile in background (non-blocking)
         supabaseClient
           .from("profiles")
-          .update({
+          .upsert({
+            id: authData.user.id,
+            email: data.email,
             full_name: data.fullName,
             display_name: data.fullName,
             username: data.username,
             phone_number: data.phoneNumber,
             team_number: data.teamNumber,
             school_name: data.teamName,
+          }, {
+            onConflict: 'id'
           })
-          .eq("id", authData.user.id)
           .then(() => {
             console.log("[AuthContext] Profile updated successfully");
           })
@@ -296,6 +315,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
       setPendingSignUp(data);
       console.log("[AuthContext] Sign up successful");
+      setPendingOAuthUser({
+        fullName: data.fullName,
+      });
     } catch (error) {
       console.error("[AuthContext] Sign up exception", error);
       throw error;
@@ -355,6 +377,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           school_name: updates.schoolName,
           city: updates.city,
           country: updates.country,
+          avatar_url: updates.avatarUrl, // Allow avatar updates
         })
         .eq("id", user.id);
 
@@ -386,6 +409,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     updatePassword,
     completeOnboarding,
     updateProfile,
+    pendingOAuthUser,
   }), [
     user,
     isLoading,
@@ -397,5 +421,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     updatePassword,
     completeOnboarding,
     updateProfile,
+    pendingOAuthUser,
   ]);
 });

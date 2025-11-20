@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
 import { ShieldCheck, Receipt, Grid3x3, ShoppingBag, Heart, Clock, ScanLine, Tag, Sliders, Crosshair, MapPin, BookOpen, UserPlus, Gift, Headphones, FileText, Settings, ChevronRight } from "lucide-react-native";
+import { Image } from "expo-image";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import ScreenWrapper from "@/components/ScreenWrapper";
@@ -61,11 +62,27 @@ export default function ProfileScreen() {
           onPress={() => router.push('/user/' + user.id)}
         >
           <View style={styles.profileInfo}>
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation();
+                router.push('/profile/edit-avatar');
+              }}
+              style={styles.avatarTouchable}
+            >
+              {user.avatarUrl ? (
+                <Image
+                  source={{ uri: user.avatarUrl }}
+                  style={styles.avatar}
+                  contentFit="cover"
+                />
+              ) : (
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
                 {user.displayName.charAt(0).toUpperCase()}
               </Text>
             </View>
+              )}
+            </TouchableOpacity>
             <View style={styles.profileDetails}>
               <View style={styles.nameRow}>
                 <Text style={styles.profileName}>{user.displayName}</Text>
@@ -360,6 +377,10 @@ const createStyles = (colors: any, insets: { top: number }) => StyleSheet.create
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+  },
+  avatarTouchable: {
+    width: 64,
+    height: 64,
   },
   avatar: {
     width: 64,

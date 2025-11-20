@@ -127,79 +127,79 @@ export default function OrdersScreen() {
         </View>
       ) : (
         <>
-          <View style={styles.tabs}>
-            <TouchableOpacity
-              style={[styles.tab, selectedTab === "all" && styles.tabActive]}
-              onPress={() => setSelectedTab("all")}
-            >
-              <Text style={[styles.tabText, selectedTab === "all" && styles.tabTextActive]}>
-                All
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tab, selectedTab === "active" && styles.tabActive]}
-              onPress={() => setSelectedTab("active")}
-            >
-              <Text style={[styles.tabText, selectedTab === "active" && styles.tabTextActive]}>
-                Active
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tab, selectedTab === "completed" && styles.tabActive]}
-              onPress={() => setSelectedTab("completed")}
-            >
-              <Text style={[styles.tabText, selectedTab === "completed" && styles.tabTextActive]}>
-                Completed
-              </Text>
-            </TouchableOpacity>
+      <View style={styles.tabs}>
+        <TouchableOpacity
+          style={[styles.tab, selectedTab === "all" && styles.tabActive]}
+          onPress={() => setSelectedTab("all")}
+        >
+          <Text style={[styles.tabText, selectedTab === "all" && styles.tabTextActive]}>
+            All
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, selectedTab === "active" && styles.tabActive]}
+          onPress={() => setSelectedTab("active")}
+        >
+          <Text style={[styles.tabText, selectedTab === "active" && styles.tabTextActive]}>
+            Active
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, selectedTab === "completed" && styles.tabActive]}
+          onPress={() => setSelectedTab("completed")}
+        >
+          <Text style={[styles.tabText, selectedTab === "completed" && styles.tabTextActive]}>
+            Completed
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {filteredOrders.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Package size={48} color={Colors.textSecondary} />
+            <Text style={styles.emptyTitle}>No orders yet</Text>
+            <Text style={styles.emptyDescription}>
+              When you purchase parts, they'll appear here
+            </Text>
           </View>
+        ) : (
+          filteredOrders.map((order) => {
+            const statusInfo = getStatusInfo(order.status);
+            const StatusIcon = statusInfo.icon;
 
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            {filteredOrders.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Package size={48} color={Colors.textSecondary} />
-                <Text style={styles.emptyTitle}>No orders yet</Text>
-                <Text style={styles.emptyDescription}>
-                  When you purchase parts, they'll appear here
-                </Text>
-              </View>
-            ) : (
-              filteredOrders.map((order) => {
-                const statusInfo = getStatusInfo(order.status);
-                const StatusIcon = statusInfo.icon;
+            return (
+              <TouchableOpacity
+                key={order.id}
+                style={styles.orderCard}
+                onPress={() => console.log("View order", order.id)}
+              >
+                <Image source={{ uri: order.listingImage }} style={styles.orderImage} />
+                
+                <View style={styles.orderInfo}>
+                  <Text style={styles.orderTitle} numberOfLines={2}>
+                    {order.listingTitle}
+                  </Text>
+                  <Text style={styles.orderSeller}>From {order.sellerName}</Text>
+                  
+                  <View style={styles.orderStatus}>
+                    <StatusIcon size={16} color={statusInfo.color} />
+                    <Text style={[styles.orderStatusText, { color: statusInfo.color }]}>
+                      {statusInfo.label}
+                    </Text>
+                  </View>
+                  
+                  <Text style={styles.orderPrice}>
+                    ${(order.priceCents / 100).toFixed(2)}
+                  </Text>
+                </View>
 
-                return (
-                  <TouchableOpacity
-                    key={order.id}
-                    style={styles.orderCard}
-                    onPress={() => console.log("View order", order.id)}
-                  >
-                    <Image source={{ uri: order.listingImage }} style={styles.orderImage} />
-                    
-                    <View style={styles.orderInfo}>
-                      <Text style={styles.orderTitle} numberOfLines={2}>
-                        {order.listingTitle}
-                      </Text>
-                      <Text style={styles.orderSeller}>From {order.sellerName}</Text>
-                      
-                      <View style={styles.orderStatus}>
-                        <StatusIcon size={16} color={statusInfo.color} />
-                        <Text style={[styles.orderStatusText, { color: statusInfo.color }]}>
-                          {statusInfo.label}
-                        </Text>
-                      </View>
-                      
-                      <Text style={styles.orderPrice}>
-                        ${(order.priceCents / 100).toFixed(2)}
-                      </Text>
-                    </View>
-
-                    <ChevronRight size={20} color={Colors.textSecondary} />
-                  </TouchableOpacity>
-                );
-              })
-            )}
-          </ScrollView>
+                <ChevronRight size={20} color={Colors.textSecondary} />
+              </TouchableOpacity>
+            );
+          })
+        )}
+      </ScrollView>
         </>
       )}
     </View>
