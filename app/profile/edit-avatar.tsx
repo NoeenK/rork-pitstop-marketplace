@@ -1,13 +1,15 @@
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Platform } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { Camera, Image as ImageIcon, X } from "lucide-react-native";
 import { useState, useMemo } from "react";
 import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
 import { Image } from "expo-image";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { supabaseClient } from "@/lib/supabase";
 import ScreenWrapper from "@/components/ScreenWrapper";
+import { decode } from "base64-arraybuffer";
 
 export default function EditAvatarScreen() {
   const router = useRouter();
@@ -69,32 +71,40 @@ export default function EditAvatarScreen() {
     try {
       setIsUploading(true);
 
-      const fileExt = selectedImage.split('.').pop() || 'jpg';
+      const fileExt = selectedImage.split('.').pop()?.toLowerCase() || 'jpg';
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
 
-      // Fetch the image as blob
-      const response = await fetch(selectedImage);
-      const blob = await response.blob();
+      let fileData: ArrayBuffer;
 
-      // Upload to Supabase Storage
+      if (Platform.OS === 'web') {
+        const response = await fetch(selectedImage);
+        fileData = await response.arrayBuffer();
+      } else {
+        const base64 = await FileSystem.readAsStringAsync(selectedImage, {
+          encoding: 'base64',
+        });
+        fileData = decode(base64);
+      }
+
       const { error: uploadError } = await supabaseClient.storage
         .from('avatars')
-        .upload(filePath, blob, {
+        .upload(filePath, fileData, {
           contentType: `image/${fileExt}`,
           upsert: true,
         });
 
       if (uploadError) {
+        console.error("[EditAvatar] Upload error:", uploadError);
         throw uploadError;
       }
 
-      // Get public URL
       const { data: { publicUrl } } = supabaseClient.storage
         .from('avatars')
         .getPublicUrl(filePath);
 
-      // Update profile with new avatar URL
+      console.log("[EditAvatar] Public URL:", publicUrl);
+
       await updateProfile({ avatarUrl: publicUrl });
 
       Alert.alert("Success", "Avatar updated successfully!", [
