@@ -194,6 +194,29 @@ export default function WelcomeScreen() {
 
         if (signUpError) {
           console.error("[Welcome] Sign up error:", signUpError);
+          
+          // Handle "user already registered" error specifically
+          if (signUpError.message?.toLowerCase().includes('already registered') || 
+              signUpError.message?.toLowerCase().includes('already exists')) {
+            Alert.alert(
+              "Account Already Exists",
+              "This email is already registered. Would you like to log in instead?",
+              [
+                {
+                  text: "Cancel",
+                  style: "cancel"
+                },
+                {
+                  text: "Go to Login",
+                  onPress: () => {
+                    router.replace("/onboarding/login");
+                  }
+                }
+              ]
+            );
+            return;
+          }
+          
           Alert.alert("Error", signUpError.message || "Failed to create account. Please try again.");
           return;
         }
