@@ -1,36 +1,25 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, Alert, Keyboard, TouchableWithoutFeedback, Platform, Switch } from "react-native";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Keyboard, TouchableWithoutFeedback } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Eye, EyeOff } from "lucide-react-native";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function SignUpEmailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { signUp } = useAuth();
 
-  const [email, setEmail] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isOver18, setIsOver18] = useState<boolean>(false);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [fadeAnim, slideAnim]);
-
-  const handleContinue = async () => {
+  const handleSignUp = async () => {
     const trimmedEmail = email.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     
@@ -39,30 +28,50 @@ export default function SignUpEmailScreen() {
       return;
     }
 
-    if (!isOver18) {
-      Alert.alert("Age Verification Required", "You must be at least 18 years old to create an account");
+    if (!username.trim()) {
+      Alert.alert("Missing Information", "Please enter a username");
+      return;
+    }
+
+    if (!phoneNumber.trim()) {
+      Alert.alert("Missing Information", "Please enter your phone number");
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      Alert.alert("Invalid Password", "Password must be at least 6 characters long");
       return;
     }
 
     try {
       setIsLoading(true);
-      console.log("[SignUp] Storing email and navigating to welcome screen:", trimmedEmail);
+      console.log("[SignUp] Creating account for:", trimmedEmail);
       
-      // Store email for welcome screen
-      await AsyncStorage.setItem("pending_signup_email", trimmedEmail);
-      
-      // Navigate directly to welcome screen (no verification needed)
-      router.push("/onboarding/welcome");
+      await signUp({
+        email: trimmedEmail,
+        password: password,
+        fullName: username.trim(),
+        username: username.trim().toLowerCase().replace(/\s+/g, ''),
+        phoneNumber: phoneNumber.trim(),
+        teamNumber: 0,
+        teamName: "",
+      });
+
+      await AsyncStorage.setItem("onboarding_completed", "true");
+      console.log("[SignUp] Account created successfully");
+      router.replace("/(tabs)/(home)");
     } catch (error: any) {
-      console.error("[SignUp] Failed to continue:", error);
+      console.error("[SignUp] Failed to sign up:", error);
       Alert.alert(
-        "Error",
-        error?.message || "Something went wrong. Please try again."
+        "Sign Up Failed",
+        error?.message || "Failed to create account. Please try again."
       );
     } finally {
       setIsLoading(false);
     }
   };
+
+  const isValid = email && username && phoneNumber && password;
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -70,70 +79,98 @@ export default function SignUpEmailScreen() {
         colors={["#FFF5E6", "#C44B5C"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
-        style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
+        style={[styles.container, { paddingTop: insets.top }]}
       >
-        <Animated.View 
-          style={[
-            styles.content,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
-            },
-          ]}
+        <ScrollView 
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 24 }]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.logo}>Pitstop</Text>
+          <View style={styles.content}>
+            <Text style={styles.logo}>Pitstop</Text>
 
-          <View style={styles.mainSection}>
-            <Text style={styles.heading}>Your <Text style={styles.firstText}>FIRST</Text> Stop</Text>
-            
-            <Text style={styles.subtitle}>Enter your email address to get started</Text>
+            <View style={styles.mainSection}>
+              <Text style={styles.heading}>Create Account</Text>
+              
+              <View style={styles.form}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  placeholderTextColor="#C4B5A8"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
 
-            <TextInput
-              style={styles.emailInput}
-              placeholder="name@yourcompany.com"
-              placeholderTextColor="#C4B5A8"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              textAlign="center"
-            />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Username"
+                  placeholderTextColor="#C4B5A8"
+                  value={username}
+                  onChangeText={setUsername}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
 
-            <Text style={styles.ageVerificationLabel}>And verify your age:</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Phone Number"
+                  placeholderTextColor="#C4B5A8"
+                  value={phoneNumber}
+                  onChangeText={setPhoneNumber}
+                  keyboardType="phone-pad"
+                />
 
-            <View style={styles.ageToggleContainer}>
-              <Text style={styles.ageToggleText}>I am at least 18 years of age</Text>
-              <Switch
-                value={isOver18}
-                onValueChange={setIsOver18}
-                trackColor={{ false: "#E8E4DF", true: "#C17B6B" }}
-                thumbColor={"#FFFFFF"}
-                ios_backgroundColor="#E8E4DF"
-              />
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={styles.passwordInput}
+                    placeholder="Password"
+                    placeholderTextColor="#C4B5A8"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                  />
+                  <TouchableOpacity 
+                    onPress={() => setShowPassword(!showPassword)}
+                    style={styles.eyeIcon}
+                  >
+                    {showPassword ? (
+                      <Eye size={20} color="#8B7E72" />
+                    ) : (
+                      <EyeOff size={20} color="#8B7E72" />
+                    )}
+                  </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity 
+                  style={[styles.signUpButton, (!isValid || isLoading) && styles.signUpButtonDisabled]}
+                  onPress={handleSignUp}
+                  disabled={!isValid || isLoading}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.signUpButtonText}>
+                    {isLoading ? "Creating Account..." : "Sign Up"}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => router.push("/onboarding/login")} disabled={isLoading}>
+                  <Text style={styles.loginText}>Already have an account? <Text style={styles.loginLink}>Log in</Text></Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
-            <TouchableOpacity 
-              style={[styles.continueButton, (!email.trim() || !isOver18 || isLoading) && styles.continueButtonDisabled]}
-              onPress={handleContinue}
-              disabled={!email.trim() || !isOver18 || isLoading}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.continueButtonText}>
-                {isLoading ? "Continuing..." : "Continue"}
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>
+                By signing up, you agree to Pitstop&apos;s{" "}
+                <Text style={styles.footerLink}>Terms of Service</Text> and{" "}
+                <Text style={styles.footerLink}>Privacy Policy</Text>.
               </Text>
-            </TouchableOpacity>
+            </View>
           </View>
-
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              By continuing, you agree to Pitstop&apos;s{" "}
-              <Text style={styles.footerLink}>Consumer Terms</Text> and{" "}
-              <Text style={styles.footerLink}>Acceptable Use Policy</Text>, and acknowledge their{" "}
-              <Text style={styles.footerLink}>Privacy Policy</Text>.
-            </Text>
-          </View>
-        </Animated.View>
+        </ScrollView>
       </LinearGradient>
     </TouchableWithoutFeedback>
   );
@@ -142,6 +179,9 @@ export default function SignUpEmailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   content: {
     flex: 1,
@@ -154,101 +194,85 @@ const styles = StyleSheet.create({
     color: "#1A1A1A",
     textAlign: "center",
     marginTop: 40,
+    marginBottom: 40,
     letterSpacing: 0.5,
-  },
-  firstText: {
-    fontWeight: "900" as const,
-    fontStyle: "italic" as const,
-    color: "#1A1A1A",
   },
   mainSection: {
     flex: 1,
     justifyContent: "center",
-    marginTop: -80,
   },
   heading: {
-    fontSize: 36,
-    fontWeight: "400" as const,
+    fontSize: 32,
+    fontWeight: "700" as const,
     color: "#1A1A1A",
     marginBottom: 32,
-    lineHeight: 44,
     textAlign: "center",
   },
-  subtitle: {
-    fontSize: 16,
-    color: "#6B5D52",
-    marginBottom: 20,
-    textAlign: "center",
+  form: {
+    gap: 16,
   },
-  emailInput: {
+  input: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
     paddingHorizontal: 20,
     paddingVertical: 18,
     fontSize: 16,
     color: "#1A1A1A",
-    marginBottom: 24,
     borderWidth: 1,
     borderColor: "#E8E4DF",
   },
-  ageVerificationLabel: {
-    fontSize: 16,
-    fontWeight: "500" as const,
-    color: "#1A1A1A",
-    textAlign: "center",
-    marginBottom: 16,
-  },
-  ageToggleContainer: {
+  passwordContainer: {
+    position: "relative",
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 18,
+    borderWidth: 1,
+    borderColor: "#E8E4DF",
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: "#E8E4DF",
   },
-  ageToggleText: {
-    fontSize: 15,
-    color: "#1A1A1A",
+  passwordInput: {
     flex: 1,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    fontSize: 16,
+    color: "#1A1A1A",
   },
-  continueButton: {
+  eyeIcon: {
+    paddingRight: 16,
+    padding: 4,
+  },
+  signUpButton: {
     backgroundColor: "#C17B6B",
     borderRadius: 16,
     paddingVertical: 18,
     alignItems: "center",
-    marginBottom: 20,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#C17B6B",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
+    marginTop: 8,
   },
-  continueButtonDisabled: {
+  signUpButtonDisabled: {
     opacity: 0.5,
   },
-  continueButtonText: {
+  signUpButtonText: {
     fontSize: 17,
     fontWeight: "600" as const,
     color: "#FFFFFF",
   },
+  loginText: {
+    fontSize: 15,
+    color: "#6B5D52",
+    textAlign: "center",
+    marginTop: 8,
+  },
+  loginLink: {
+    color: "#C17B6B",
+    fontWeight: "600" as const,
+  },
   footer: {
-    paddingBottom: 20,
-    paddingTop: 20,
+    paddingVertical: 24,
   },
   footerText: {
-    fontSize: 13,
+    fontSize: 12,
     color: "#8B7E72",
-    lineHeight: 18,
+    lineHeight: 16,
     textAlign: "center",
   },
   footerLink: {
