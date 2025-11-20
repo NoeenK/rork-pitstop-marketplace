@@ -73,18 +73,14 @@ export default function EditAvatarScreen() {
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
 
-      // Create form data for file upload
-      const formData = new FormData();
-      formData.append('file', {
-        uri: selectedImage,
-        name: fileName,
-        type: `image/${fileExt}`,
-      } as any);
+      // Fetch the image as blob
+      const response = await fetch(selectedImage);
+      const blob = await response.blob();
 
-      // Upload to Supabase Storage using FormData
+      // Upload to Supabase Storage
       const { error: uploadError } = await supabaseClient.storage
         .from('avatars')
-        .upload(filePath, formData, {
+        .upload(filePath, blob, {
           contentType: `image/${fileExt}`,
           upsert: true,
         });
@@ -275,7 +271,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     gap: 12,
   },
   optionButtonPrimary: {
-    backgroundColor: colors.accent,
+    backgroundColor: "#FF8A3D",
   },
   optionButtonSuccess: {
     backgroundColor: "#10B981",
@@ -287,6 +283,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     fontSize: 16,
     fontWeight: "600" as const,
     color: "#FFFFFF",
+    textAlign: "center" as const,
   },
 });
 
