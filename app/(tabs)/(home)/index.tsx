@@ -8,7 +8,6 @@ import { useListings } from "@/contexts/ListingsContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import SearchBar from "@/components/SearchBar";
-import ListingCard from "@/components/ListingCard";
 import HorizontalListingCard from "@/components/HorizontalListingCard";
 import SectionHeader from "@/components/SectionHeader";
 
@@ -25,9 +24,9 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [searchText, setSearchText] = useState<string>("");
-  const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>("FRC");
+  const [searchText, setSearchText] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("FRC");
   const scrollY = useRef(new Animated.Value(0)).current;
   const indicatorPosition = useRef(new Animated.Value(0)).current;
 
