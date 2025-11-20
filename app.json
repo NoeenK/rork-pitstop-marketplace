@@ -47,7 +47,8 @@
         "ACCESS_BACKGROUND_LOCATION",
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.SCHEDULE_EXACT_ALARM",
-        "RECORD_AUDIO"
+        "RECORD_AUDIO",
+        "INTERNET"
       ]
     },
     "web": {
