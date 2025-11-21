@@ -10,6 +10,8 @@ export default function SplashScreen() {
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const textOpacity = useRef(new Animated.Value(0)).current;
   const textTranslateY = useRef(new Animated.Value(20)).current;
+  const poweredByOpacity = useRef(new Animated.Value(0)).current;
+  const poweredByScale = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
     Animated.sequence([
@@ -38,6 +40,20 @@ export default function SplashScreen() {
           useNativeDriver: true,
         }),
       ]),
+      Animated.delay(200),
+      Animated.parallel([
+        Animated.timing(poweredByOpacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.spring(poweredByScale, {
+          toValue: 1,
+          tension: 40,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]),
     ]).start();
 
     const timer = setTimeout(() => {
@@ -45,7 +61,7 @@ export default function SplashScreen() {
     }, 2800);
 
     return () => clearTimeout(timer);
-  }, [router, logoScale, logoOpacity, textOpacity, textTranslateY]);
+  }, [router, logoScale, logoOpacity, textOpacity, textTranslateY, poweredByOpacity, poweredByScale]);
 
   return (
     <View style={styles.container}>
@@ -82,6 +98,18 @@ export default function SplashScreen() {
         >
           PITSTOP
         </Animated.Text>
+        <Animated.View
+          style={[
+            styles.poweredByContainer,
+            {
+              opacity: poweredByOpacity,
+              transform: [{ scale: poweredByScale }],
+            },
+          ]}
+        >
+          <Text style={styles.poweredByText}>powered by</Text>
+          <Text style={styles.poweredByBrand}>ALT-F4</Text>
+        </Animated.View>
       </View>
     </View>
   );
@@ -120,5 +148,23 @@ const styles = StyleSheet.create({
     fontWeight: "900" as const,
     color: Colors.text,
     letterSpacing: 2,
+  },
+  poweredByContainer: {
+    marginTop: 32,
+    alignItems: "center",
+  },
+  poweredByText: {
+    fontSize: 12,
+    fontWeight: "400" as const,
+    color: Colors.textSecondary,
+    opacity: 0.7,
+    marginBottom: 4,
+    letterSpacing: 1,
+  },
+  poweredByBrand: {
+    fontSize: 16,
+    fontWeight: "700" as const,
+    color: Colors.accent,
+    letterSpacing: 1.5,
   },
 });
