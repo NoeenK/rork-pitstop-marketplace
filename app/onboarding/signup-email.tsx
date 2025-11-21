@@ -1,16 +1,14 @@
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Keyboard, TouchableWithoutFeedback } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Eye, EyeOff } from "lucide-react-native";
-import { useAuth } from "@/contexts/AuthContext";
+import { trpc } from "@/lib/trpc";
 
 export default function SignUpEmailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { signUp } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,6 +16,8 @@ export default function SignUpEmailScreen() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const sendVerificationMutation = trpc.auth.sendVerificationCode.useMutation();
 
   const handleSignUp = async () => {
     const trimmedEmail = email.trim().toLowerCase();
@@ -45,43 +45,41 @@ export default function SignUpEmailScreen() {
 
     try {
       setIsLoading(true);
-      console.log("[SignUp] Creating account for:", trimmedEmail);
+      console.log("[SignUp] Sending verification code to:", trimmedEmail);
       
-      await signUp({
-        email: trimmedEmail,
-        password: password,
-        fullName: username.trim(),
-        username: username.trim().toLowerCase().replace(/\s+/g, ''),
-        phoneNumber: phoneNumber.trim(),
-        teamNumber: 0,
-        teamName: "",
-      });
+      const result = await sendVerificationMutation.mutateAsync({ email: trimmedEmail });
 
-      await AsyncStorage.setItem("onboarding_completed", "true");
-      console.log("[SignUp] Account created successfully");
-      router.replace("/(tabs)/(home)");
-    } catch (error: any) {
-      console.error("[SignUp] Failed to sign up:", error);
-      
-      // Handle user already exists error
-      if (error?.code === "USER_ALREADY_EXISTS" || error?.message?.includes("already registered")) {
+      if (result.success) {
+        console.log("[SignUp] Verification code sent successfully");
         Alert.alert(
-          "Account Already Exists",
-          "This email is already registered. Would you like to log in instead?",
+          "Verification Code Sent",
+          "Please check your email for the 6-digit verification code.",
           [
-            { text: "Cancel", style: "cancel" },
-            { 
-              text: "Log In", 
-              onPress: () => router.push("/onboarding/login")
-            }
+            {
+              text: "OK",
+              onPress: () => {
+                router.push({
+                  pathname: "/onboarding/verify-email",
+                  params: {
+                    email: trimmedEmail,
+                    username: username.trim(),
+                    phoneNumber: phoneNumber.trim(),
+                    password: password,
+                  },
+                });
+              },
+            },
           ]
         );
       } else {
-        Alert.alert(
-          "Sign Up Failed",
-          error?.message || "Failed to create account. Please try again."
-        );
+        Alert.alert("Error", result.message || "Failed to send verification code");
       }
+    } catch (error: any) {
+      console.error("[SignUp] Failed to send verification code:", error);
+      Alert.alert(
+        "Error",
+        error?.message || "Failed to send verification code. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }

@@ -1,64 +1,84 @@
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from "react-native";
 import { useState, useEffect } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { Colors } from "@/constants/colors";
+import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/AuthContext";
-import { verifyEmailCode, sendVerificationCode } from "@/lib/verification";
+import { trpc } from "@/lib/trpc";
 
 export default function VerifyEmailScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ email?: string; code?: string }>();
+  const params = useLocalSearchParams();
   const insets = useSafeAreaInsets();
-  const { signOut } = useAuth();
-  const [code, setCode] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [isVerifying, setIsVerifying] = useState<boolean>(false);
+  const { signUp } = useAuth();
+  const [code, setCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const verifyCodeMutation = trpc.auth.verifyCode.useMutation();
+  const resendCodeMutation = trpc.auth.sendVerificationCode.useMutation();
 
   useEffect(() => {
-    if (params.email) {
-      setEmail(params.email);
-      console.log("[VerifyEmail] Pre-filled email from signup:", params.email);
-    }
     if (params.code) {
       setCode(params.code);
       console.log("[VerifyEmail] Pre-filled code from signup:", params.code);
     }
-  }, [params.email, params.code]);
+  }, [params.code]);
 
   const handleVerify = async () => {
-    if (!code || !email) {
-      Alert.alert("Error", "Please enter your email and verification code");
+    if (!code || !params.email) {
+      Alert.alert("Error", "Please enter the verification code");
       return;
     }
 
-    const trimmedEmail = email.trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
-    if (!emailRegex.test(trimmedEmail)) {
-      Alert.alert("Invalid Email", "Please enter a valid email address");
+    if (!params.username || !params.phoneNumber || !params.password) {
+      Alert.alert("Error", "Missing signup information. Please start over.");
+      router.replace("/onboarding/signup-email");
       return;
     }
 
     try {
       setIsVerifying(true);
-      console.log("[VerifyEmail] Verifying with code:", code, "and email:", trimmedEmail);
+      console.log("[VerifyEmail] Verifying code for:", params.email);
       
-      const isValid = await verifyEmailCode(trimmedEmail, code);
+      const result = await verifyCodeMutation.mutateAsync({
+        email: params.email,
+        code: code,
+      });
 
-      if (!isValid) {
-        console.error("[VerifyEmail] Verification error: Invalid or expired code");
-        Alert.alert("Verification Failed", "Invalid or expired verification code. Please try again.");
+      if (!result.success) {
+        console.error("[VerifyEmail] Verification error:", result.message);
+        Alert.alert("Verification Failed", result.message);
         return;
       }
 
-      console.log("[VerifyEmail] Verification successful - moving to welcome screen");
-      router.replace({
-        pathname: "/onboarding/welcome",
-        params: { email: trimmedEmail }
+      console.log("[VerifyEmail] Verification successful - creating account");
+      
+      await signUp({
+        email: params.email,
+        password: params.password,
+        fullName: params.username,
+        username: params.username.toLowerCase().replace(/\s+/g, ''),
+        phoneNumber: params.phoneNumber,
+        teamNumber: 0,
+        teamName: "",
       });
+
+      await AsyncStorage.setItem("onboarding_completed", "true");
+      console.log("[VerifyEmail] Account created successfully");
+      
+      Alert.alert(
+        "Account Created!",
+        "Your account has been created successfully.",
+        [
+          {
+            text: "OK",
+            onPress: () => router.replace("/(tabs)/(home)"),
+          },
+        ]
+      );
     } catch (error: any) {
-      console.error("[VerifyEmail] Verification failed:", error);
+      console.error("[VerifyEmail] Verification or signup failed:", error);
       Alert.alert("Error", error?.message || "Something went wrong. Please try again.");
     } finally {
       setIsVerifying(false);
@@ -66,45 +86,42 @@ export default function VerifyEmailScreen() {
   };
 
   const handleResend = async () => {
-    if (!email) {
-      Alert.alert("Error", "Please enter your email address");
-      return;
-    }
-
-    const trimmedEmail = email.trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
-    if (!emailRegex.test(trimmedEmail)) {
-      Alert.alert("Invalid Email", "Please enter a valid email address");
+    if (!params.email) {
+      Alert.alert("Error", "Missing email. Please start over.");
       return;
     }
 
     try {
-      console.log("[VerifyEmail] Resending verification code to:", trimmedEmail);
-      await sendVerificationCode(trimmedEmail);
-      Alert.alert("Success", "A new verification code has been sent to your email!");
+      console.log("[VerifyEmail] Resending verification code to:", params.email);
+      const result = await resendCodeMutation.mutateAsync({ email: params.email });
+      
+      if (result.success) {
+        Alert.alert("Success", "A new verification code has been sent to your email!");
+      } else {
+        Alert.alert("Error", result.message || "Failed to resend code");
+      }
     } catch (error: any) {
       console.error("[VerifyEmail] Resend failed:", error);
       Alert.alert("Error", error?.message || "Failed to resend code. Please try again.");
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      router.push("/onboarding/intro");
-    } catch (error) {
-      console.error("[VerifyEmail] Logout failed:", error);
-    }
+  const handleBack = () => {
+    router.back();
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <LinearGradient
+      colors={["#FFF5E6", "#C44B5C"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={[styles.container, { paddingTop: insets.top }]}
+    >
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleLogout}>
-          <Text style={styles.logoutText}>Log out</Text>
+        <TouchableOpacity onPress={handleBack}>
+          <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Verify your email</Text>
+        <Text style={styles.headerTitle}>Verify Email</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -116,81 +133,60 @@ export default function VerifyEmailScreen() {
       >
         <View style={styles.content}>
           <Text style={styles.description}>
-            {params.email ? (
-              `We sent a verification code to ${params.email}. Enter it below:`
-            ) : (
-              "Enter your email and the verification code that we sent you:"
-            )}
+            We sent a 6-digit verification code to {params.email}. Please enter it below:
           </Text>
 
-          {!params.email && (
+          <View style={styles.codeInputContainer}>
             <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor={Colors.textSecondary}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
+              style={styles.codeInput}
+              placeholder="000000"
+              placeholderTextColor="#C4B5A8"
+              value={code}
+              onChangeText={setCode}
+              keyboardType="number-pad"
+              maxLength={6}
+              autoFocus
             />
-          )}
-
-          <TextInput
-            style={styles.input}
-            placeholder="Verification code"
-            placeholderTextColor={Colors.textSecondary}
-            value={code}
-            onChangeText={setCode}
-            keyboardType="number-pad"
-            maxLength={6}
-          />
+          </View>
 
           <TouchableOpacity 
-            style={[styles.verifyButton, (!code || isVerifying) && styles.verifyButtonDisabled]}
+            style={[styles.verifyButton, (!code || code.length !== 6 || isVerifying) && styles.verifyButtonDisabled]}
             onPress={handleVerify}
-            disabled={!code || isVerifying}
+            disabled={!code || code.length !== 6 || isVerifying}
+            activeOpacity={0.8}
           >
-            <Text style={styles.verifyButtonText}>{isVerifying ? "Verifying..." : "Verify"}</Text>
+            <Text style={styles.verifyButtonText}>{isVerifying ? "Verifying..." : "Verify & Sign Up"}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleResend}>
-            <Text style={styles.resendText}>Didn&apos;t receive our email?</Text>
-          </TouchableOpacity>
-
-          <View style={styles.spacer} />
-
-          <TouchableOpacity>
-            <Text style={styles.helpText}>Have any questions?</Text>
+          <TouchableOpacity onPress={handleResend} style={styles.resendContainer}>
+            <Text style={styles.resendText}>Didn&apos;t receive the code? <Text style={styles.resendLink}>Resend</Text></Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#EEEEEE",
+    paddingHorizontal: 24,
+    paddingVertical: 16,
   },
-  logoutText: {
+  backText: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: "#000000",
+    color: "#1A1A1A",
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: "600" as const,
-    color: "#000000",
+    fontWeight: "700" as const,
+    color: "#1A1A1A",
   },
   placeholder: {
     width: 60,
@@ -199,33 +195,40 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
+    paddingHorizontal: 32,
+    paddingTop: 40,
   },
   content: {
-    gap: 20,
+    gap: 24,
   },
   description: {
     fontSize: 16,
-    color: "#666666",
+    color: "#1A1A1A",
     lineHeight: 24,
+    textAlign: "center",
   },
-  email: {
-    fontSize: 16,
+  codeInputContainer: {
+    alignItems: "center",
+    marginVertical: 16,
+  },
+  codeInput: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    fontSize: 24,
     fontWeight: "600" as const,
-    color: "#000000",
-  },
-  input: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#DDDDDD",
-    paddingVertical: 12,
-    fontSize: 16,
-    color: "#000000",
+    color: "#1A1A1A",
+    borderWidth: 1,
+    borderColor: "#E8E4DF",
+    width: "100%",
+    textAlign: "center",
+    letterSpacing: 8,
   },
   verifyButton: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 16,
-    borderRadius: 12,
+    backgroundColor: "#C17B6B",
+    borderRadius: 16,
+    paddingVertical: 18,
     alignItems: "center",
     marginTop: 8,
   },
@@ -233,23 +236,20 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   verifyButtonText: {
-    fontSize: 16,
-    fontWeight: "700" as const,
+    fontSize: 17,
+    fontWeight: "600" as const,
     color: "#FFFFFF",
   },
+  resendContainer: {
+    marginTop: 8,
+  },
   resendText: {
-    fontSize: 16,
-    fontWeight: "600" as const,
-    color: Colors.primary,
+    fontSize: 15,
+    color: "#6B5D52",
     textAlign: "center",
   },
-  spacer: {
-    height: 200,
-  },
-  helpText: {
-    fontSize: 16,
+  resendLink: {
+    color: "#C17B6B",
     fontWeight: "600" as const,
-    color: Colors.primary,
-    textAlign: "center",
   },
 });
