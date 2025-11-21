@@ -3,13 +3,12 @@ import { Stack, useRouter } from "expo-router";
 import { Camera, Image as ImageIcon, X } from "lucide-react-native";
 import { useState, useMemo } from "react";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system";
+import { File } from "expo-file-system";
 import { Image } from "expo-image";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { supabaseClient } from "@/lib/supabase";
 import ScreenWrapper from "@/components/ScreenWrapper";
-import { decode } from "base64-arraybuffer";
 
 export default function EditAvatarScreen() {
   const router = useRouter();
@@ -81,10 +80,12 @@ export default function EditAvatarScreen() {
         const response = await fetch(selectedImage);
         fileData = await response.arrayBuffer();
       } else {
-        const base64 = await FileSystem.readAsStringAsync(selectedImage, {
-          encoding: 'base64',
-        });
-        fileData = decode(base64);
+        const file = new File(selectedImage);
+        const bytes = await file.downloadAsync();
+        if (!bytes) {
+          throw new Error('Failed to read file');
+        }
+        fileData = bytes;
       }
 
       const { error: uploadError } = await supabaseClient.storage
