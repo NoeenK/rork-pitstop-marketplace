@@ -1,9 +1,9 @@
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Platform } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { Camera, Image as ImageIcon, X } from "lucide-react-native";
 import { useState, useMemo } from "react";
 import * as ImagePicker from "expo-image-picker";
-import { File } from "expo-file-system";
+
 import { Image } from "expo-image";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -74,19 +74,8 @@ export default function EditAvatarScreen() {
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
 
-      let fileData: ArrayBuffer;
-
-      if (Platform.OS === 'web') {
-        const response = await fetch(selectedImage);
-        fileData = await response.arrayBuffer();
-      } else {
-        const file = new File(selectedImage);
-        const bytes = await file.downloadAsync();
-        if (!bytes) {
-          throw new Error('Failed to read file');
-        }
-        fileData = bytes;
-      }
+      const response = await fetch(selectedImage);
+      const fileData = await response.arrayBuffer();
 
       const { error: uploadError } = await supabaseClient.storage
         .from('avatars')
