@@ -1,15 +1,15 @@
 import createContextHook from "@nkzw/create-context-hook";
-import { useState, useCallback, useMemo, useEffect } from "react";
+import React, { useCallback, useMemo, useEffect } from "react";
 import { ChatThread, Message, Offer } from "@/types";
 import { supabaseClient } from "@/lib/supabase";
 import { useAuth } from "./AuthContext";
 
 export const [ChatProvider, useChat] = createContextHook(() => {
   const { user } = useAuth();
-  const [threads, setThreads] = useState<ChatThread[]>([]);
-  const [messages, setMessages] = useState<Record<string, Message[]>>({});
-  const [offers, setOffers] = useState<Offer[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [threads, setThreads] = React.useState([] as ChatThread[]);
+  const [messages, setMessages] = React.useState({} as Record<string, Message[]>);
+  const [offers, setOffers] = React.useState([] as Offer[]);
+  const [isLoading, setIsLoading] = React.useState(false);
 
   useEffect(() => {
     if (!user) return;
