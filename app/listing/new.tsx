@@ -1,6 +1,6 @@
 import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity, Alert } from "react-native";
 import { useRouter, Stack } from "expo-router";
-import { useState, useMemo } from "react";
+import React, { useMemo, Fragment } from "react";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { X, Upload } from "lucide-react-native";
@@ -19,15 +19,15 @@ export default function NewListingScreen() {
   const { user } = useAuth();
   const { colors } = useTheme();
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState<Category | null>(null);
-  const [condition, setCondition] = useState<Condition | null>(null);
-  const [price, setPrice] = useState("");
-  const [isSwapOnly, setIsSwapOnly] = useState(false);
-  const [seasonTag, setSeasonTag] = useState("");
-  const [images, setImages] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [title, setTitle] = React.useState("");
+  const [description, setDescription] = React.useState("");
+  const [category, setCategory] = React.useState(null as Category | null);
+  const [condition, setCondition] = React.useState(null as Condition | null);
+  const [price, setPrice] = React.useState("");
+  const [isSwapOnly, setIsSwapOnly] = React.useState(false);
+  const [seasonTag, setSeasonTag] = React.useState("");
+  const [images, setImages] = React.useState([] as string[]);
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -204,13 +204,14 @@ export default function NewListingScreen() {
         <View style={styles.section}>
           <Text style={styles.label}>Category *</Text>
           <View style={styles.chipGrid}>
-            {LISTING_CATEGORIES.map((cat) => (
-              <FilterChip
-                key={cat}
-                label={cat}
-                selected={category === cat}
-                onPress={() => setCategory(cat)}
-              />
+            {LISTING_CATEGORIES.map((cat, idx) => (
+              <Fragment key={`cat-${idx}`}>
+                <FilterChip
+                  label={cat}
+                  selected={category === cat}
+                  onPress={() => setCategory(cat)}
+                />
+              </Fragment>
             ))}
           </View>
         </View>
@@ -218,13 +219,14 @@ export default function NewListingScreen() {
         <View style={styles.section}>
           <Text style={styles.label}>Condition *</Text>
           <View style={styles.chipGrid}>
-            {LISTING_CONDITIONS.map((cond) => (
-              <FilterChip
-                key={cond}
-                label={cond}
-                selected={condition === cond}
-                onPress={() => setCondition(cond)}
-              />
+            {LISTING_CONDITIONS.map((cond, idx) => (
+              <Fragment key={`cond-${idx}`}>
+                <FilterChip
+                  label={cond}
+                  selected={condition === cond}
+                  onPress={() => setCondition(cond)}
+                />
+              </Fragment>
             ))}
           </View>
         </View>
