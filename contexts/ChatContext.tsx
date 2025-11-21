@@ -52,6 +52,7 @@ export const [ChatProvider, useChat] = createContextHook(() => {
               senderId: msg.sender_id,
               text: msg.text,
               createdAt: new Date(msg.created_at),
+              readAt: msg.read_at ? new Date(msg.read_at) : undefined,
             };
           }
         });
@@ -197,6 +198,7 @@ export const [ChatProvider, useChat] = createContextHook(() => {
               senderId: newMsg.sender_id,
               text: newMsg.text,
               createdAt: new Date(newMsg.created_at),
+              readAt: newMsg.read_at ? new Date(newMsg.read_at) : undefined,
             };
             
             setMessages(prev => {
@@ -252,6 +254,7 @@ export const [ChatProvider, useChat] = createContextHook(() => {
         senderId: msg.sender_id,
         text: msg.text,
         createdAt: new Date(msg.created_at),
+        readAt: msg.read_at ? new Date(msg.read_at) : undefined,
       }));
       
       setMessages(prev => ({
@@ -297,6 +300,7 @@ export const [ChatProvider, useChat] = createContextHook(() => {
         senderId: data.sender_id,
         text: data.text,
         createdAt: new Date(data.created_at),
+        readAt: undefined,
       };
 
       // Add message to local state immediately for instant UI update
@@ -464,9 +468,29 @@ export const [ChatProvider, useChat] = createContextHook(() => {
   }, []);
 
   const markThreadAsRead = useCallback(async (threadId: string) => {
+    if (!user) return;
+    
     try {
       console.log("[ChatContext] Marking thread as read:", threadId);
 
+      // Call the Supabase function to mark messages as read
+      await supabaseClient.rpc('mark_messages_as_read', {
+        p_thread_id: threadId,
+        p_user_id: user.id,
+      });
+
+      // Update local state to mark messages as read
+      setMessages(prev => {
+        const threadMessages = prev[threadId] || [];
+        const updatedMessages = threadMessages.map(msg =>
+          msg.senderId !== user.id && !msg.readAt
+            ? { ...msg, readAt: new Date() }
+            : msg
+        );
+        return { ...prev, [threadId]: updatedMessages };
+      });
+
+      // Update thread unread count
       await supabaseClient
         .from('chat_threads')
         .update({ unread_count: 0 })
@@ -482,7 +506,7 @@ export const [ChatProvider, useChat] = createContextHook(() => {
     } catch (error) {
       console.error("[ChatContext] Failed to mark thread as read:", error);
     }
-  }, []);
+  }, [user]);
 
   return useMemo(() => ({
     threads,

@@ -73,6 +73,7 @@ export interface Message {
   text: string;
   offerId?: string;
   createdAt: Date;
+  readAt?: Date;
 }
 
 export interface Offer {

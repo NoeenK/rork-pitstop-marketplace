@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
 import { Message } from "@/types";
 import ChatBubble from "./ChatBubble";
-import { Image } from "expo-image";
+import React from "react";
 
 interface MessageListProps {
   messages: Message[];
@@ -11,7 +11,7 @@ interface MessageListProps {
     avatarUrl?: string;
   };
   isLoading?: boolean;
-  scrollViewRef?: React.RefObject<ScrollView>;
+  scrollViewRef?: any;
 }
 
 export default function MessageList({
@@ -118,6 +118,7 @@ export default function MessageList({
                 <View style={[styles.timestampContainer, isOwn && styles.timestampContainerOwn]}>
                   <Text style={styles.timestamp}>
                     {formatTime(message.createdAt)}
+                    {isOwn && message.readAt && " • Read"}
                   </Text>
                 </View>
               )}
