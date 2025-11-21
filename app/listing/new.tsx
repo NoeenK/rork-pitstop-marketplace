@@ -11,7 +11,7 @@ import { Category, Condition } from "@/types";
 import Button from "@/components/Button";
 import FilterChip from "@/components/FilterChip";
 import { useTheme } from "@/contexts/ThemeContext";
-import ScreenWrapper from "@/components/ScreenWrapper";
+
 
 export default function NewListingScreen() {
   const router = useRouter();
@@ -19,15 +19,15 @@ export default function NewListingScreen() {
   const { user } = useAuth();
   const { colors } = useTheme();
 
-  const [title, setTitle] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [category, setCategory] = useState<Category | null>(null);
   const [condition, setCondition] = useState<Condition | null>(null);
-  const [price, setPrice] = useState<string>("");
-  const [isSwapOnly, setIsSwapOnly] = useState<boolean>(false);
-  const [seasonTag, setSeasonTag] = useState<string>("");
+  const [price, setPrice] = useState("");
+  const [isSwapOnly, setIsSwapOnly] = useState(false);
+  const [seasonTag, setSeasonTag] = useState("");
   const [images, setImages] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -117,7 +117,8 @@ export default function NewListingScreen() {
 
       Alert.alert("Success", "Listing created successfully!");
       router.back();
-    } catch (error) {
+    } catch (err) {
+      console.error("[NewListing] Failed to create listing:", err);
       Alert.alert("Error", "Failed to create listing");
     } finally {
       setIsLoading(false);
@@ -125,15 +126,22 @@ export default function NewListingScreen() {
   };
 
   return (
-    <ScreenWrapper>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <Stack.Screen
         options={{
           title: "New Listing",
-          headerShown: false,
+          headerShown: true,
+          headerBackTitleVisible: false,
+          headerLargeTitle: false,
         }}
       />
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        style={styles.scroll} 
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+      >
         <View style={styles.section}>
           <Text style={styles.label}>Photos *</Text>
           <ScrollView
@@ -171,6 +179,9 @@ export default function NewListingScreen() {
             placeholder="e.g., Swerve Module MK4i"
             placeholderTextColor={colors.textSecondary}
             maxLength={100}
+            editable={!isLoading}
+            autoCapitalize="sentences"
+            returnKeyType="next"
           />
         </View>
 
@@ -185,6 +196,8 @@ export default function NewListingScreen() {
             multiline
             numberOfLines={6}
             textAlignVertical="top"
+            editable={!isLoading}
+            autoCapitalize="sentences"
           />
         </View>
 
@@ -235,6 +248,8 @@ export default function NewListingScreen() {
               placeholder="0.00"
               placeholderTextColor={colors.textSecondary}
               keyboardType="decimal-pad"
+              editable={!isLoading}
+              returnKeyType="done"
             />
           )}
         </View>
@@ -247,6 +262,9 @@ export default function NewListingScreen() {
             onChangeText={setSeasonTag}
             placeholder="e.g., Crescendo 2024"
             placeholderTextColor={colors.textSecondary}
+            editable={!isLoading}
+            autoCapitalize="words"
+            returnKeyType="done"
           />
         </View>
 
@@ -258,7 +276,7 @@ export default function NewListingScreen() {
           testID="submit-button"
         />
       </ScrollView>
-    </ScreenWrapper>
+    </View>
   );
 }
 
