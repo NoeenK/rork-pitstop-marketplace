@@ -108,9 +108,6 @@ export default function NewListingScreen() {
         seasonTag: seasonTag.trim() || undefined,
         roboticsCategory: "FRC",
         isActive: true,
-        likeCount: 0,
-        shareCount: 0,
-        chatCount: 0,
         isSold: false,
         priceHistory: [],
       });
