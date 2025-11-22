@@ -21,12 +21,12 @@ export default function NewListingScreen() {
 
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
-  const [category, setCategory] = React.useState(null as Category | null);
-  const [condition, setCondition] = React.useState(null as Condition | null);
+  const [category, setCategory] = React.useState<Category | null>(null);
+  const [condition, setCondition] = React.useState<Condition | null>(null);
   const [price, setPrice] = React.useState("");
   const [isSwapOnly, setIsSwapOnly] = React.useState(false);
   const [seasonTag, setSeasonTag] = React.useState("");
-  const [images, setImages] = React.useState([] as string[]);
+  const [images, setImages] = React.useState<string[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
 
   const styles = useMemo(() => createStyles(colors), [colors]);
