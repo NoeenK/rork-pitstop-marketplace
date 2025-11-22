@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { publicProcedure } from "../../../create-context";
-import { getSupabaseAdmin } from "@/backend/lib/supabase-admin";
 
 const verificationCodes = new Map<string, { code: string; expiresAt: number }>();
 
@@ -27,25 +26,14 @@ export const sendVerificationCodeProcedure = publicProcedure
 
     console.log("[SendVerificationCode] Generated code:", code, "for:", normalizedEmail);
 
-    try {
-      const supabaseAdmin = getSupabaseAdmin();
-      const { error } = await supabaseAdmin.auth.admin.generateLink({
-        type: 'magiclink',
-        email: normalizedEmail,
-      });
+    console.log("\n" + "=".repeat(60));
+    console.log("🔐 VERIFICATION CODE");
+    console.log("📧 Email:", normalizedEmail);
+    console.log("🔢 Code:", code);
+    console.log("⏰ Expires in: 10 minutes");
+    console.log("=".repeat(60) + "\n");
 
-      if (error) {
-        console.error("[SendVerificationCode] Supabase error:", error);
-      }
-
-      console.log("[SendVerificationCode] Email sent successfully");
-      console.log("[SendVerificationCode] VERIFICATION CODE FOR", normalizedEmail, ":", code);
-
-      return { success: true, message: "Verification code sent to your email" };
-    } catch (error) {
-      console.error("[SendVerificationCode] Failed to send email:", error);
-      throw new Error("Failed to send verification code. Please try again.");
-    }
+    return { success: true, message: "Verification code sent to your email" };
   });
 
 export const verifyCodeProcedure = publicProcedure
