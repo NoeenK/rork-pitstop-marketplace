@@ -1,45 +1,32 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Keyboard, TouchableWithoutFeedback } from "react-native";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Keyboard, TouchableWithoutFeedback, Switch } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Eye, EyeOff } from "lucide-react-native";
 import { trpc } from "@/lib/trpc";
+import { supabaseClient as supabase } from "@/lib/supabase";
 
 export default function SignUpEmailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [username, setUsername] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [isOver18, setIsOver18] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const sendVerificationMutation = trpc.auth.sendVerificationCode.useMutation();
 
-  const handleSignUp = async () => {
+  const handleSendVerification = async () => {
     const trimmedEmail = email.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     
     if (!emailRegex.test(trimmedEmail)) {
-      Alert.alert("Invalid Email", "Please enter a valid email address");
+      Alert.alert("Invalid Email", "Please enter a valid Gmail address");
       return;
     }
 
-    if (!username.trim()) {
-      Alert.alert("Missing Information", "Please enter a username");
-      return;
-    }
-
-    if (!phoneNumber.trim()) {
-      Alert.alert("Missing Information", "Please enter your phone number");
-      return;
-    }
-
-    if (!password || password.length < 6) {
-      Alert.alert("Invalid Password", "Password must be at least 6 characters long");
+    if (!isOver18) {
+      Alert.alert("Age Restriction", "You must be 18 years or older to sign up");
       return;
     }
 
@@ -47,33 +34,30 @@ export default function SignUpEmailScreen() {
       setIsLoading(true);
       console.log("[SignUp] Sending verification code to:", trimmedEmail);
       
-      const result = await sendVerificationMutation.mutateAsync({ email: trimmedEmail });
+      // Send 6-digit code via email using Supabase OTP
+      const { error } = await supabase.auth.signInWithOtp({
+        email: trimmedEmail,
+        options: {
+          emailRedirectTo: 'your-app-scheme://onboarding/verify-email',
+          shouldCreateUser: false, // Don't create user until verified
+          data: {
+            // Add any additional user data here
+            is_over_18: true
+          }
+        }
+      });
 
-      if (result.success) {
-        console.log("[SignUp] Verification code sent successfully");
-        Alert.alert(
-          "Verification Code Sent",
-          "Please check your email for the 6-digit verification code.",
-          [
-            {
-              text: "OK",
-              onPress: () => {
-                router.push({
-                  pathname: "/onboarding/verify-email",
-                  params: {
-                    email: trimmedEmail,
-                    username: username.trim(),
-                    phoneNumber: phoneNumber.trim(),
-                    password: password,
-                  },
-                });
-              },
-            },
-          ]
-        );
-      } else {
-        Alert.alert("Error", result.message || "Failed to send verification code");
-      }
+      if (error) throw error;
+
+      console.log("[SignUp] 6-digit code sent successfully");
+      
+      // Navigate to verification screen
+      router.push({
+        pathname: "/onboarding/verify-email",
+        params: {
+          email: trimmedEmail,
+        },
+      });
     } catch (error: any) {
       console.error("[SignUp] Failed to send verification code:", error);
       Alert.alert(
@@ -85,7 +69,7 @@ export default function SignUpEmailScreen() {
     }
   };
 
-  const isValid = email && username && phoneNumber && password;
+  const isValid = email && isOver18;
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -109,64 +93,34 @@ export default function SignUpEmailScreen() {
               <View style={styles.form}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Email"
+                  placeholder="Enter your Gmail"
                   placeholderTextColor="#C4B5A8"
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
+                  autoComplete="email"
                 />
 
-                <TextInput
-                  style={styles.input}
-                  placeholder="Username"
-                  placeholderTextColor="#C4B5A8"
-                  value={username}
-                  onChangeText={setUsername}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-
-                <TextInput
-                  style={styles.input}
-                  placeholder="Phone Number"
-                  placeholderTextColor="#C4B5A8"
-                  value={phoneNumber}
-                  onChangeText={setPhoneNumber}
-                  keyboardType="phone-pad"
-                />
-
-                <View style={styles.passwordContainer}>
-                  <TextInput
-                    style={styles.passwordInput}
-                    placeholder="Password"
-                    placeholderTextColor="#C4B5A8"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
+                <View style={styles.ageContainer}>
+                  <Text style={styles.ageText}>I am 18 years or older</Text>
+                  <Switch
+                    value={isOver18}
+                    onValueChange={setIsOver18}
+                    trackColor={{ false: '#767577', true: '#81b0ff' }}
+                    thumbColor={isOver18 ? '#f5dd4b' : '#f4f3f4'}
                   />
-                  <TouchableOpacity 
-                    onPress={() => setShowPassword(!showPassword)}
-                    style={styles.eyeIcon}
-                  >
-                    {showPassword ? (
-                      <Eye size={20} color="#8B7E72" />
-                    ) : (
-                      <EyeOff size={20} color="#8B7E72" />
-                    )}
-                  </TouchableOpacity>
                 </View>
 
                 <TouchableOpacity 
                   style={[styles.signUpButton, (!isValid || isLoading) && styles.signUpButtonDisabled]}
-                  onPress={handleSignUp}
+                  onPress={handleSendVerification}
                   disabled={!isValid || isLoading}
                   activeOpacity={0.8}
                 >
                   <Text style={styles.signUpButtonText}>
-                    {isLoading ? "Creating Account..." : "Sign Up"}
+                    {isLoading ? "Sending Code..." : "Send Verification Code"}
                   </Text>
                 </TouchableOpacity>
 
