@@ -1,105 +1,118 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from "react-native";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Keyboard } from "react-native";
 import { useState, useEffect } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useAuth } from "@/contexts/AuthContext";
-import { trpc } from "@/lib/trpc";
+import { supabaseClient as supabase } from "@/lib/supabase";
 
 export default function VerifyEmailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const insets = useSafeAreaInsets();
-  const { signUp } = useAuth();
   const [code, setCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(30);
+  const [email, setEmail] = useState("");
 
-  const verifyCodeMutation = trpc.auth.verifyCode.useMutation();
-  const resendCodeMutation = trpc.auth.sendVerificationCode.useMutation();
-
+  // Handle deep link for email verification
   useEffect(() => {
-    if (params.code) {
-      setCode(params.code);
-      console.log("[VerifyEmail] Pre-filled code from signup:", params.code);
+    if (params.email) {
+      setEmail(params.email as string);
     }
-  }, [params.code]);
+  }, [params.email]);
+
+  // Handle resend cooldown
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
 
   const handleVerify = async () => {
-    if (!code || !params.email) {
-      Alert.alert("Error", "Please enter the verification code");
+    if (!code || code.length !== 6) {
+      Alert.alert("Error", "Please enter the 6-digit verification code");
       return;
     }
 
-    if (!params.username || !params.phoneNumber || !params.password) {
-      Alert.alert("Error", "Missing signup information. Please start over.");
+    if (!email) {
+      Alert.alert("Error", "Email not found. Please try signing up again.");
       router.replace("/onboarding/signup-email");
       return;
     }
 
     try {
       setIsVerifying(true);
-      console.log("[VerifyEmail] Verifying code for:", params.email);
+      Keyboard.dismiss();
       
-      const result = await verifyCodeMutation.mutateAsync({
-        email: params.email,
-        code: code,
+      // Verify the 6-digit code with Supabase
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token: code,
+        type: 'email',
       });
 
-      if (!result.success) {
-        console.error("[VerifyEmail] Verification error:", result.message);
-        Alert.alert("Verification Failed", result.message);
-        return;
+      if (error) throw error;
+
+      console.log("[VerifyEmail] Verification successful");
+      
+      // Get the current user session
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) throw userError;
+      
+      // Update user metadata if needed
+      if (user) {
+        const { error: updateError } = await supabase.auth.updateUser({
+          data: { is_over_18: true }
+        });
+        if (updateError) console.warn("Failed to update user metadata:", updateError);
       }
-
-      console.log("[VerifyEmail] Verification successful - creating account");
       
-      await signUp({
-        email: params.email,
-        password: params.password,
-        fullName: params.username,
-        username: params.username.toLowerCase().replace(/\s+/g, ''),
-        phoneNumber: params.phoneNumber,
-        teamNumber: 0,
-        teamName: "",
+      // Navigate to the username & team selection screen
+      router.replace({
+        pathname: "/onboarding/username-team",
+        params: { email }
       });
-
-      await AsyncStorage.setItem("onboarding_completed", "true");
-      console.log("[VerifyEmail] Account created successfully");
       
-      Alert.alert(
-        "Account Created!",
-        "Your account has been created successfully.",
-        [
-          {
-            text: "OK",
-            onPress: () => router.replace("/(tabs)/(home)"),
-          },
-        ]
-      );
     } catch (error: any) {
-      console.error("[VerifyEmail] Verification or signup failed:", error);
-      Alert.alert("Error", error?.message || "Something went wrong. Please try again.");
+      console.error("[VerifyEmail] Verification failed:", error);
+      Alert.alert("Verification Failed", error?.message || "Invalid or expired code. Please try again.");
     } finally {
       setIsVerifying(false);
     }
   };
 
   const handleResend = async () => {
-    if (!params.email) {
-      Alert.alert("Error", "Missing email. Please start over.");
+    if (!email) {
+      Alert.alert("Error", "Email not found. Please try signing up again.");
+      return;
+    }
+
+    if (resendCooldown > 0) {
+      Alert.alert("Please wait", `Please wait ${resendCooldown} seconds before requesting a new code.`);
       return;
     }
 
     try {
-      console.log("[VerifyEmail] Resending verification code to:", params.email);
-      const result = await resendCodeMutation.mutateAsync({ email: params.email });
+      console.log("[VerifyEmail] Resending 6-digit code to:", email);
       
-      if (result.success) {
-        Alert.alert("Success", "A new verification code has been sent to your email!");
-      } else {
-        Alert.alert("Error", result.message || "Failed to resend code");
-      }
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: 'your-app-scheme://onboarding/verify-email',
+          shouldCreateUser: false,
+          data: {
+            is_over_18: true
+          }
+        },
+      });
+
+      if (error) throw error;
+      
+      setResendCooldown(30);
+      Alert.alert("Success", "A new 6-digit code has been sent to your email!");
+      
     } catch (error: any) {
       console.error("[VerifyEmail] Resend failed:", error);
       Alert.alert("Error", error?.message || "Failed to resend code. Please try again.");
@@ -133,7 +146,7 @@ export default function VerifyEmailScreen() {
       >
         <View style={styles.content}>
           <Text style={styles.description}>
-            We sent a 6-digit verification code to {params.email}. Please enter it below:
+            We sent a 6-digit verification code to {email}. Please enter it below:
           </Text>
 
           <View style={styles.codeInputContainer}>
@@ -158,8 +171,19 @@ export default function VerifyEmailScreen() {
             <Text style={styles.verifyButtonText}>{isVerifying ? "Verifying..." : "Verify & Sign Up"}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleResend} style={styles.resendContainer}>
-            <Text style={styles.resendText}>Didn&apos;t receive the code? <Text style={styles.resendLink}>Resend</Text></Text>
+          <TouchableOpacity 
+            onPress={handleResend} 
+            style={styles.resendContainer}
+            disabled={resendCooldown > 0}
+          >
+            <Text style={styles.resendText}>
+              {resendCooldown > 0 
+                ? `Resend code in ${resendCooldown}s` 
+                : "Didn't receive the code? "}
+              {resendCooldown === 0 && (
+                <Text style={styles.resendLink}>Resend</Text>
+              )}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -226,19 +250,20 @@ const styles = StyleSheet.create({
     letterSpacing: 8,
   },
   verifyButton: {
-    backgroundColor: "#C17B6B",
-    borderRadius: 16,
-    paddingVertical: 18,
+    backgroundColor: "#1A1A1A",
+    borderRadius: 12,
+    paddingVertical: 16,
     alignItems: "center",
-    marginTop: 8,
+    marginTop: 32,
+    opacity: 1,
   },
   verifyButtonDisabled: {
     opacity: 0.5,
   },
   verifyButtonText: {
-    fontSize: 17,
-    fontWeight: "600" as const,
     color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
   },
   resendContainer: {
     marginTop: 8,
