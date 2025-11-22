@@ -3,7 +3,11 @@ import { useState, useEffect } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+<<<<<<< HEAD
 import { supabaseClient as supabase } from "@/lib/supabase";
+=======
+import { trpc } from "@/lib/trpc";
+>>>>>>> 0d25c0bb0981f71bb280b7530bbc5f1234c448d7
 
 export default function VerifyEmailScreen() {
   const router = useRouter();
@@ -68,6 +72,7 @@ export default function VerifyEmailScreen() {
         });
         if (updateError) console.warn("Failed to update user metadata:", updateError);
       }
+<<<<<<< HEAD
       
       // Navigate to the username & team selection screen
       router.replace({
@@ -75,6 +80,20 @@ export default function VerifyEmailScreen() {
         params: { email }
       });
       
+=======
+
+      console.log("[VerifyEmail] Verification successful - redirecting to team selection");
+      
+      router.push({
+        pathname: "/onboarding/select-team",
+        params: {
+          email: params.email,
+          password: params.password,
+          username: params.username,
+          phoneNumber: params.phoneNumber,
+        },
+      });
+>>>>>>> 0d25c0bb0981f71bb280b7530bbc5f1234c448d7
     } catch (error: any) {
       console.error("[VerifyEmail] Verification failed:", error);
       Alert.alert("Verification Failed", error?.message || "Invalid or expired code. Please try again.");
