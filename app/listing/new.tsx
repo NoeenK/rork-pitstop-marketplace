@@ -1,6 +1,6 @@
 import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity, Alert } from "react-native";
 import { useRouter, Stack } from "expo-router";
-import React, { useMemo, Fragment } from "react";
+import { useState, useMemo, Fragment } from "react";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { X, Upload } from "lucide-react-native";
@@ -19,15 +19,15 @@ export default function NewListingScreen() {
   const { user } = useAuth();
   const { colors } = useTheme();
 
-  const [title, setTitle] = React.useState("");
-  const [description, setDescription] = React.useState("");
-  const [category, setCategory] = React.useState<Category | null>(null);
-  const [condition, setCondition] = React.useState<Condition | null>(null);
-  const [price, setPrice] = React.useState("");
-  const [isSwapOnly, setIsSwapOnly] = React.useState(false);
-  const [seasonTag, setSeasonTag] = React.useState("");
-  const [images, setImages] = React.useState<string[]>([]);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [title, setTitle] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const [category, setCategory] = useState<Category | null>(null);
+  const [condition, setCondition] = useState<Condition | null>(null);
+  const [price, setPrice] = useState<string>("");
+  const [isSwapOnly, setIsSwapOnly] = useState<boolean>(false);
+  const [seasonTag, setSeasonTag] = useState<string>("");
+  const [images, setImages] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 

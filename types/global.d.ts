@@ -1,6 +1,5 @@
 declare module "react-native";
 declare module "@react-native-async-storage/async-storage";
-declare module "react";
 declare module "expo-router";
 declare module "lucide-react-native";
 declare module "expo-linear-gradient";
