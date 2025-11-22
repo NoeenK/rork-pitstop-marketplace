@@ -22,37 +22,11 @@ export default function UsernameTeamScreen() {
 
   const fetchTeams = async () => {
     try {
-      // This is a mock implementation - replace with actual Blue Alliance API call
-      // For now, we'll use some sample team numbers
-      const mockTeams = [
-        { team_number: 254, nickname: "The Cheesy Poofs" },
-        { team_number: 148, nickname: "RoboWranglers" },
-        { team_number: 118, nickname: "The Robonauts" },
-        { team_number: 1678, nickname: "Citrus Circuits" },
-        { team_number: 2056, nickname: "OP Robotics" },
-        { team_number: 1114, nickname: "Simbotics" },
-        { team_number: 971, nickname: "Sparta Robotics" },
-        { team_number: 1323, nickname: "MadTown Robotics" },
-        { team_number: 1678, nickname: "Citrus Circuits" },
-        { team_number: 2910, nickname: "Jack in the Bot" },
-        { team_number: 118, nickname: "The Robonauts" },
-        { team_number: 3309, nickname: "Beachbotics" }
-      ];
-      
-      // Sort teams by team number
-      const sortedTeams = [...mockTeams].sort((a, b) => a.team_number - b.team_number);
-      setTeams(sortedTeams);
+      // For now, we'll use an empty array since we'll use a text input for team number
+      setTeams([]);
     } catch (error) {
-      console.error("Error fetching teams:", error);
-      Alert.alert("Error", "Failed to load teams. Using default list.");
-      
-      // Fallback to a minimal set of teams
-      const fallbackTeams = [
-        { team_number: 1, nickname: "Team 1" },
-        { team_number: 2, nickname: "Team 2" },
-        { team_number: 3, nickname: "Team 3" }
-      ];
-      setTeams(fallbackTeams);
+      console.error("Error initializing team selection:", error);
+      Alert.alert("Error", "Failed to initialize team selection. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -151,24 +125,18 @@ export default function UsernameTeamScreen() {
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Select Your Team</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={selectedTeam}
-                onValueChange={(itemValue) => setSelectedTeam(itemValue)}
-                style={styles.picker}
-                dropdownIconColor="#C44B5C"
-              >
-                <Picker.Item label="Select a team..." value="" />
-                {teams.map((team) => (
-                  <Picker.Item 
-                    key={team.team_number} 
-                    label={`${team.team_number} - ${team.nickname}`} 
-                    value={team.team_number.toString()} 
-                  />
-                ))}
-              </Picker>
-            </View>
+            <Text style={styles.label}>Enter Your Team Number</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. 254"
+              value={selectedTeam}
+              onChangeText={setSelectedTeam}
+              keyboardType="number-pad"
+              maxLength={5}
+            />
+            <Text style={styles.helperText}>
+              Enter your FRC team number (e.g., 254, 118, 1678)
+            </Text>
           </View>
 
           <TouchableOpacity 
