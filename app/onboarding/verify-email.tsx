@@ -2,16 +2,13 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert 
 import { useState, useEffect } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useAuth } from "@/contexts/AuthContext";
 import { trpc } from "@/lib/trpc";
 
 export default function VerifyEmailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const insets = useSafeAreaInsets();
-  const { signUp } = useAuth();
   const [code, setCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
 
@@ -52,31 +49,17 @@ export default function VerifyEmailScreen() {
         return;
       }
 
-      console.log("[VerifyEmail] Verification successful - creating account");
+      console.log("[VerifyEmail] Verification successful - redirecting to team selection");
       
-      await signUp({
-        email: params.email,
-        password: params.password,
-        fullName: params.username,
-        username: params.username.toLowerCase().replace(/\s+/g, ''),
-        phoneNumber: params.phoneNumber,
-        teamNumber: 0,
-        teamName: "",
+      router.push({
+        pathname: "/onboarding/select-team",
+        params: {
+          email: params.email,
+          password: params.password,
+          username: params.username,
+          phoneNumber: params.phoneNumber,
+        },
       });
-
-      await AsyncStorage.setItem("onboarding_completed", "true");
-      console.log("[VerifyEmail] Account created successfully");
-      
-      Alert.alert(
-        "Account Created!",
-        "Your account has been created successfully.",
-        [
-          {
-            text: "OK",
-            onPress: () => router.replace("/(tabs)/(home)"),
-          },
-        ]
-      );
     } catch (error: any) {
       console.error("[VerifyEmail] Verification or signup failed:", error);
       Alert.alert("Error", error?.message || "Something went wrong. Please try again.");

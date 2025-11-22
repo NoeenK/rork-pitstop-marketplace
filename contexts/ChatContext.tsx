@@ -6,9 +6,9 @@ import { useAuth } from "./AuthContext";
 
 export const [ChatProvider, useChat] = createContextHook(() => {
   const { user } = useAuth();
-  const [threads, setThreads] = React.useState([] as ChatThread[]);
-  const [messages, setMessages] = React.useState({} as Record<string, Message[]>);
-  const [offers, setOffers] = React.useState([] as Offer[]);
+  const [threads, setThreads] = React.useState<ChatThread[]>([]);
+  const [messages, setMessages] = React.useState<Record<string, Message[]>>({});
+  const [offers, setOffers] = React.useState<Offer[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
 
   useEffect(() => {
