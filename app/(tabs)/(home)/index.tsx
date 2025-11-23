@@ -4,7 +4,7 @@ import { MapPin, SlidersHorizontal } from "lucide-react-native";
 import { useState, useRef, useMemo, useCallback } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useListings } from "@/contexts/ListingsContext";
-
+import { Category } from "@/types";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import SearchBar from "@/components/SearchBar";
@@ -61,7 +61,7 @@ export default function HomeScreen() {
   const pneumaticsListings = useMemo(() => listings.filter(l => l.category === "Pneumatics").slice(0, 6), [listings]);
   const structureListings = useMemo(() => listings.filter(l => l.category === "Structure").slice(0, 6), [listings]);
   const toolsListings = useMemo(() => listings.filter(l => l.category === "Tools").slice(0, 6), [listings]);
-  const merchandiseListings = useMemo(() => listings.filter(l => l.category === "Team Merchandise").slice(0, 6), [listings]);
+  const merchandiseListings = useMemo(() => listings.filter(l => l.category === ("Team Merchandise" as Category)).slice(0, 6), [listings]);
 
   return (
     <ScreenWrapper>

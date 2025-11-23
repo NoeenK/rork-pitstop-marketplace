@@ -15,7 +15,8 @@ import * as Haptics from "expo-haptics";
 const { width } = Dimensions.get("window");
 
 export default function ListingDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams();
+  const id = typeof params.id === 'string' ? params.id : '';
   const router = useRouter();
   const { getListingById, incrementViewCount } = useListings();
   const { user } = useAuth();
@@ -23,7 +24,7 @@ export default function ListingDetailScreen() {
   const { getReviewsForUser, getAverageRating } = useReviews();
   const { addToRecentlyViewed } = useRecentlyViewed();
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<any>(null);
   
   const listing = getListingById(id || "");
 

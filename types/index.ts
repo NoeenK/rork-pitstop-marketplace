@@ -1,6 +1,6 @@
 export type Condition = "New" | "Like New" | "Good" | "Used" | "For Parts";
 
-export type Category = "Drivetrain" | "Electronics" | "Pneumatics" | "Structure" | "Tools" | "Misc";
+export type Category = "Drivetrain" | "Electronics" | "Pneumatics" | "Structure" | "Tools" | "Misc" | "Team Merchandise";
 
 export type RoboticsCategory = "FRC" | "FTC" | "FLL";
 

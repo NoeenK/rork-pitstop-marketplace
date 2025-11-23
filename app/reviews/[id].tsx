@@ -9,7 +9,8 @@ import { mapProfileToUser } from "@/lib/profile";
 import { User } from "@/types";
 
 export default function ReviewsListScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams();
+  const id = typeof params.id === 'string' ? params.id : '';
   const { getReviewsForUser, getAverageRating } = useReviews();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);

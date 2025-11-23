@@ -12,7 +12,8 @@ import { User } from "@/types";
 import { mapProfileToUser } from "@/lib/profile";
 
 export default function UserProfileScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams();
+  const id = typeof params.id === 'string' ? params.id : '';
   const router = useRouter();
   const { allListings } = useListings();
   const { getReviewsForUser, getAverageRating } = useReviews();

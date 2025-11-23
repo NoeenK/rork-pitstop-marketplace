@@ -169,8 +169,9 @@ app.get("/api/auth/google/callback", async (c) => {
 
     const supabase = getSupabaseAdmin();
 
-    const existingUser = await supabase.auth.admin.getUserByEmail(tokenInfo.email);
-    let userId = existingUser.data?.user?.id;
+    const { data: listData } = await supabase.auth.admin.listUsers();
+    const existingUser = listData?.users?.find((u: any) => u.email === tokenInfo.email);
+    let userId = existingUser?.id;
 
     if (!userId) {
       const createdUser = await supabase.auth.admin.createUser({

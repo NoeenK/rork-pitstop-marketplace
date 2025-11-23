@@ -3,7 +3,6 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { StyleSheet } from "react-native";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ListingsProvider } from "@/contexts/ListingsContext";
 import { ChatProvider } from "@/contexts/ChatContext";
@@ -241,8 +240,6 @@ function RootLayoutNav() {
 }
 
 function ThemedAppContent() {
-  const { colors } = useTheme();
-  
   return (
     <AuthProvider>
       <ReviewsProvider>
@@ -256,7 +253,7 @@ function ThemedAppContent() {
                       <ListingsProvider>
                         <ChatProvider>
                           <ActivityProvider>
-                            <GestureHandlerRootView style={styles.container}>
+                            <GestureHandlerRootView>
                               <RootLayoutNav />
                             </GestureHandlerRootView>
                           </ActivityProvider>
@@ -289,9 +286,3 @@ export default function RootLayout() {
     </trpc.Provider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});

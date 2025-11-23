@@ -6,14 +6,14 @@ import { Search, SlidersHorizontal } from "lucide-react-native";
 import ListingCard from "@/components/ListingCard";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { useState, useRef, useEffect, memo } from "react";
-import type { Listing } from "@/types";
+import type { Listing, Category } from "@/types";
 
 interface AnimatedListingCardProps {
   listing: Listing;
   index: number;
 }
 
-const AnimatedListingCard = memo(({ listing, index }: AnimatedListingCardProps) => {
+const AnimatedListingCard = memo(function AnimatedListingCard({ listing, index }: AnimatedListingCardProps) {
   const delayAnim = useRef(new Animated.Value(0)).current;
   
   useEffect(() => {
@@ -48,7 +48,8 @@ const AnimatedListingCard = memo(({ listing, index }: AnimatedListingCardProps) 
 });
 
 export default function CategoryListingsScreen() {
-  const { type } = useLocalSearchParams<{ type: string }>();
+  const params = useLocalSearchParams();
+  const type = typeof params.type === 'string' ? params.type : '';
   const { listings } = useListings();
   const { colors } = useTheme();
   const router = useRouter();
@@ -101,7 +102,7 @@ export default function CategoryListingsScreen() {
         categoryListings = listings.filter(l => l.category === "Tools");
         break;
       case "team-merchandise":
-        categoryListings = listings.filter(l => l.category === "Team Merchandise");
+        categoryListings = listings.filter(l => l.category === ("Team Merchandise" as Category));
         break;
       default:
         categoryListings = listings;
