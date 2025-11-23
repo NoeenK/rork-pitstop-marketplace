@@ -256,7 +256,7 @@ function ThemedAppContent() {
                       <ListingsProvider>
                         <ChatProvider>
                           <ActivityProvider>
-                            <GestureHandlerRootView style={[styles.container, { backgroundColor: colors.background }]}>
+                            <GestureHandlerRootView style={styles.container}>
                               <RootLayoutNav />
                             </GestureHandlerRootView>
                           </ActivityProvider>

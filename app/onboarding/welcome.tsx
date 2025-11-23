@@ -12,7 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function WelcomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { pendingOAuthUser } = useAuth();
+  const authContext = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const [fullName, setFullName] = useState("");
@@ -48,12 +48,7 @@ export default function WelcomeScreen() {
       }),
     ]).start();
 
-    if (pendingOAuthUser?.fullName) {
-      console.log('[Welcome] Pre-filling name from OAuth:', pendingOAuthUser.fullName);
-      setFullName(pendingOAuthUser.fullName);
-      setIsOAuthUser(true);
-    }
-  }, [fadeAnim, slideAnim, pendingOAuthUser]);
+  }, [fadeAnim, slideAnim]);
 
 
 

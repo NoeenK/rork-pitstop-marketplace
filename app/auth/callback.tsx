@@ -9,7 +9,7 @@ import { supabaseClient } from "@/lib/supabase";
 export default function AuthCallbackScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { completeGoogleSignIn } = useAuth();
+  const authContext = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(true);
 
@@ -75,7 +75,10 @@ export default function AuthCallbackScreen() {
           });
           const callbackUrl = `pitstop://auth/callback?${searchParams.toString()}`;
           console.log("[AuthCallbackScreen] Processing mobile callback:", callbackUrl);
-          await completeGoogleSignIn(callbackUrl);
+          await supabaseClient.auth.setSession({
+            access_token: params.access_token as string,
+            refresh_token: params.refresh_token as string,
+          });
           
           if (isMounted) {
             router.replace("/(tabs)/(home)");
@@ -101,7 +104,7 @@ export default function AuthCallbackScreen() {
         setError("Authentication is taking longer than expected. Please try again.");
         setIsProcessing(false);
       }
-    }, 10000); // 10 second timeout
+    }, 10000) as any; // 10 second timeout
 
     finalize();
 
@@ -111,7 +114,7 @@ export default function AuthCallbackScreen() {
         clearTimeout(timeoutId);
       }
     };
-  }, [completeGoogleSignIn, router, params]);
+  }, [router, params]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>

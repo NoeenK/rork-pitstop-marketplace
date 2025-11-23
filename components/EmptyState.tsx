@@ -1,9 +1,9 @@
 import { View, Text, StyleSheet } from "react-native";
-import { LucideIcon } from "lucide-react-native";
 import { useTheme } from "@/contexts/ThemeContext";
+import { ComponentType } from "react";
 
 interface EmptyStateProps {
-  icon: LucideIcon;
+  icon: ComponentType<any>;
   title: string;
   description: string;
   testID?: string;
