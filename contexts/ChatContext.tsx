@@ -183,7 +183,6 @@ export const [ChatProvider, useChat] = createContextHook(() => {
           console.log("[ChatContext] New message in any thread:", payload);
           const newMsg = payload.new as any;
           
-          // Check if this message belongs to a thread the user is part of
           const { data: threadData } = await supabaseClient
             .from('chat_threads')
             .select('id, buyer_id, seller_id')
@@ -191,7 +190,6 @@ export const [ChatProvider, useChat] = createContextHook(() => {
             .single();
           
           if (threadData && (threadData.buyer_id === user.id || threadData.seller_id === user.id)) {
-            // Add message to local state if we have it loaded
             const newMessage: Message = {
               id: newMsg.id,
               threadId: newMsg.thread_id,
@@ -203,7 +201,6 @@ export const [ChatProvider, useChat] = createContextHook(() => {
             
             setMessages(prev => {
               const existingMessages = prev[newMsg.thread_id] || [];
-              // Check if message already exists to avoid duplicates
               if (existingMessages.some(m => m.id === newMessage.id)) {
                 return prev;
               }
@@ -213,9 +210,36 @@ export const [ChatProvider, useChat] = createContextHook(() => {
               };
             });
             
-            // Reload threads to update last message and unread counts
             await loadThreads();
           }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+        },
+        (payload) => {
+          console.log("[ChatContext] Message updated (read receipt):", payload);
+          const updatedMsg = payload.new as any;
+          
+          setMessages(prev => {
+            const threadMessages = prev[updatedMsg.thread_id] || [];
+            const updatedMessages = threadMessages.map(msg =>
+              msg.id === updatedMsg.id
+                ? {
+                    ...msg,
+                    readAt: updatedMsg.read_at ? new Date(updatedMsg.read_at) : undefined,
+                  }
+                : msg
+            );
+            return {
+              ...prev,
+              [updatedMsg.thread_id]: updatedMessages,
+            };
+          });
         }
       )
       .subscribe();
