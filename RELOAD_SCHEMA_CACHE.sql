@@ -5,7 +5,7 @@
 -- so it can see all the columns you've added to tables
 -- ============================================
 
-NOTIFY pgrst, 'reload schema';
+NOTIFY pgrst, 'reload sbuchema';
 
 -- After running this, wait 2-3 seconds before testing your app
 -- The schema cache should now include all your new columns
