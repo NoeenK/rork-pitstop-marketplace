@@ -81,12 +81,6 @@ export default function SelectTeamScreen() {
           school_name: selectedTeam.nickname,
           city: 'Toronto',
           country: 'CA',
-          is_verified: false,
-          created_at: new Date().toISOString(),
-          trades_completed: 0,
-          rating: 0,
-          review_count: 0,
-          response_rate: 0,
         });
 
       if (profileError) {
