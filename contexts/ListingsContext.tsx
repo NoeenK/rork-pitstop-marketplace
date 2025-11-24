@@ -267,7 +267,7 @@ export const [ListingsProvider, useListings] = createContextHook(() => {
 
   const incrementViewCount = useCallback(async (id: string) => {
     try {
-      const { data, error } = await supabaseClient.rpc("increment_listing_views", {
+      const { error } = await supabaseClient.rpc("increment_listing_views", {
         listing_id: id,
       });
 
