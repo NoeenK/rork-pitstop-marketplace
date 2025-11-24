@@ -72,18 +72,7 @@ export default function VerifyEmailScreen() {
       // Navigate to the username & team selection screen
       console.log("[VerifyEmail] Verification successful - redirecting to team selection");
       
-      // Only include parameters that exist
-      const navigationParams: Record<string, any> = { email };
-      
-      // Add optional parameters if they exist
-      if (params.password) navigationParams.password = params.password;
-      if (params.username) navigationParams.username = params.username;
-      if (params.phoneNumber) navigationParams.phoneNumber = params.phoneNumber;
-      
-      router.replace({
-        pathname: "/onboarding/select-team",
-        params: navigationParams,
-      });
+      router.replace("/onboarding/select-team");
     } catch (error: any) {
       console.error("[VerifyEmail] Verification failed:", error);
       Alert.alert("Verification Failed", error?.message || "Invalid or expired code. Please try again.");

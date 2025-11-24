@@ -34,14 +34,11 @@ export default function SignUpEmailScreen() {
       setIsLoading(true);
       console.log("[SignUp] Sending verification code to:", trimmedEmail);
       
-      // Send 6-digit code via email using Supabase OTP
       const { error } = await supabase.auth.signInWithOtp({
         email: trimmedEmail,
         options: {
-          emailRedirectTo: 'your-app-scheme://onboarding/verify-email',
-          shouldCreateUser: false, // Don't create user until verified
+          shouldCreateUser: true,
           data: {
-            // Add any additional user data here
             is_over_18: true
           }
         }
@@ -51,7 +48,6 @@ export default function SignUpEmailScreen() {
 
       console.log("[SignUp] 6-digit code sent successfully");
       
-      // Navigate to verification screen
       router.push({
         pathname: "/onboarding/verify-email",
         params: {
@@ -245,5 +241,20 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     textDecorationLine: "underline",
+  },
+  ageContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    borderWidth: 1,
+    borderColor: "#E8E4DF",
+  },
+  ageText: {
+    fontSize: 16,
+    color: "#1A1A1A",
   },
 });

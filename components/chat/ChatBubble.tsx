@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet } from "react-native";
 import { Image } from "expo-image";
+import { Check, CheckCheck } from "lucide-react-native";
 import { Message } from "@/types";
 
 interface ChatBubbleProps {
@@ -17,6 +18,14 @@ export default function ChatBubble({
   avatarUrl,
   displayName 
 }: ChatBubbleProps) {
+  const formatTime = (date: Date) => {
+    return new Date(date).toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
+
   return (
     <View style={[styles.container, isOwn && styles.containerOwn]}>
       {!isOwn && (
@@ -40,10 +49,24 @@ export default function ChatBubble({
           )}
         </View>
       )}
-      <View style={[styles.bubble, isOwn ? styles.bubbleOwn : styles.bubbleOther]}>
-        <Text style={[styles.text, isOwn && styles.textOwn]}>
-          {message.text}
-        </Text>
+      <View style={styles.messageContainer}>
+        <View style={[styles.bubble, isOwn ? styles.bubbleOwn : styles.bubbleOther]}>
+          <Text style={[styles.text, isOwn && styles.textOwn]}>
+            {message.text}
+          </Text>
+        </View>
+        <View style={[styles.metaContainer, isOwn && styles.metaContainerOwn]}>
+          <Text style={styles.timeText}>{formatTime(message.createdAt)}</Text>
+          {isOwn && (
+            <View style={styles.readReceiptContainer}>
+              {message.readAt ? (
+                <CheckCheck size={14} color="#4A90E2" strokeWidth={2.5} />
+              ) : (
+                <Check size={14} color="#8E8E93" strokeWidth={2.5} />
+              )}
+            </View>
+          )}
+        </View>
       </View>
     </View>
   );
@@ -53,7 +76,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "flex-end",
-    marginBottom: 2,
+    marginBottom: 12,
   },
   containerOwn: {
     justifyContent: "flex-end",
@@ -76,11 +99,13 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "600" as const,
     color: "#000000",
   },
-  bubble: {
+  messageContainer: {
     maxWidth: "70%",
+  },
+  bubble: {
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 18,
@@ -101,6 +126,22 @@ const styles = StyleSheet.create({
   },
   textOwn: {
     color: "#111111",
+  },
+  metaContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+    paddingHorizontal: 4,
+  },
+  metaContainerOwn: {
+    justifyContent: "flex-end",
+  },
+  timeText: {
+    fontSize: 11,
+    color: "#8E8E93",
+  },
+  readReceiptContainer: {
+    marginLeft: 4,
   },
 });
 

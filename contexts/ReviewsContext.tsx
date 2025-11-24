@@ -34,7 +34,8 @@ export const [ReviewsProvider, useReviews] = createContextHook(() => {
           .order("created_at", { ascending: false });
 
         if (error) {
-          console.error("[ReviewsContext] Error loading reviews:", error);
+          console.error("[ReviewsContext] Error loading reviews:", JSON.stringify(error, null, 2));
+          console.error("[ReviewsContext] Error details:", error);
           setReviews([]);
           return;
         }
@@ -49,8 +50,10 @@ export const [ReviewsProvider, useReviews] = createContextHook(() => {
           setReviews([]);
           console.log("[ReviewsContext] No reviews found");
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("[ReviewsContext] Unexpected error loading reviews:", error);
+        console.error("[ReviewsContext] Error message:", error?.message);
+        console.error("[ReviewsContext] Error details:", JSON.stringify(error, null, 2));
         setReviews([]);
       } finally {
         setIsLoading(false);

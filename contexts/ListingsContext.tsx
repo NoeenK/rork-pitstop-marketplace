@@ -55,7 +55,8 @@ export const [ListingsProvider, useListings] = createContextHook(() => {
           .order("created_at", { ascending: false });
 
         if (error) {
-          console.error("[ListingsContext] Error loading listings:", error);
+          console.error("[ListingsContext] Error loading listings:", JSON.stringify(error, null, 2));
+          console.error("[ListingsContext] Error details:", error);
           setListings([]);
           return;
         }
@@ -70,8 +71,10 @@ export const [ListingsProvider, useListings] = createContextHook(() => {
           setListings([]);
           console.log("[ListingsContext] No listings found");
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("[ListingsContext] Unexpected error loading listings:", error);
+        console.error("[ListingsContext] Error message:", error?.message);
+        console.error("[ListingsContext] Error details:", JSON.stringify(error, null, 2));
         setListings([]);
       } finally {
         setIsLoading(false);

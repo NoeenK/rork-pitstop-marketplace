@@ -8,7 +8,7 @@ import { Colors } from "@/constants/colors";
 export default function GoogleCallbackScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { completeGoogleSignIn } = useAuth();
+  const authContext = useAuth();
   const [error, setError] = useState<string | null>(null);
 
   const searchString = useMemo(() => {
@@ -52,7 +52,11 @@ export default function GoogleCallbackScreen() {
         }
         
         console.log("[GoogleCallbackScreen] Processing callback URL");
-        await completeGoogleSignIn(callbackUrl);
+        const { supabaseClient } = require("@/lib/supabase");
+        await supabaseClient.auth.setSession({
+          access_token: params.access_token as string,
+          refresh_token: params.refresh_token as string,
+        });
         
         if (!isMounted) {
           return;
@@ -76,7 +80,7 @@ export default function GoogleCallbackScreen() {
         console.warn("[GoogleCallbackScreen] Timeout reached");
         setError("Sign in is taking longer than expected. Please try again.");
       }
-    }, 10000); // 10 second timeout
+    }, 10000) as any; // 10 second timeout
 
     finalize();
 
@@ -86,7 +90,7 @@ export default function GoogleCallbackScreen() {
         clearTimeout(timeoutId);
       }
     };
-  }, [completeGoogleSignIn, router, searchString, error]);
+  }, [router, searchString, error]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>

@@ -7,6 +7,7 @@ import { Search } from "lucide-react-native";
 import { searchTeams, TBATeamSimple } from "@/lib/tba";
 import { useAuth } from "@/contexts/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { supabaseClient as supabase } from "@/lib/supabase";
 
 export default function SelectTeamScreen() {
   const router = useRouter();
@@ -59,42 +60,41 @@ export default function SelectTeamScreen() {
       return;
     }
 
-    if (!params.email || !params.password) {
-      Alert.alert("Error", "Missing signup information. Please start over.");
-      router.replace("/onboarding/signup-email");
-      return;
-    }
-
     try {
       setIsLoading(true);
-      console.log("[SelectTeam] Creating account with team:", selectedTeam.team_number);
+      console.log("[SelectTeam] Updating profile with team:", selectedTeam.team_number);
 
-      await signUp({
-        email: params.email as string,
-        password: params.password as string,
-        fullName: username.trim(),
-        username: username.toLowerCase().replace(/\s+/g, ''),
-        phoneNumber: (params.phoneNumber as string) || "",
-        teamNumber: selectedTeam.team_number,
-        teamName: selectedTeam.nickname,
-      });
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("User not authenticated. Please start over.");
+      }
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          email: user.email!,
+          display_name: username.trim(),
+          username: username.toLowerCase().replace(/\s+/g, ''),
+          team_number: selectedTeam.team_number,
+          school_name: selectedTeam.nickname,
+          city: 'Toronto',
+          country: 'CA',
+        });
+
+      if (profileError) {
+        console.error("[SelectTeam] Profile error:", profileError);
+        throw profileError;
+      }
 
       await AsyncStorage.setItem("onboarding_completed", "true");
-      console.log("[SelectTeam] Account created successfully");
+      console.log("[SelectTeam] Profile created successfully");
 
-      Alert.alert(
-        "Welcome to Pitstop!",
-        "Your account has been created successfully.",
-        [
-          {
-            text: "Get Started",
-            onPress: () => router.replace("/(tabs)/(home)"),
-          },
-        ]
-      );
+      router.replace("/(tabs)/(home)");
     } catch (error: any) {
-      console.error("[SelectTeam] Signup failed:", error);
-      Alert.alert("Error", error?.message || "Failed to create account. Please try again.");
+      console.error("[SelectTeam] Profile creation failed:", error);
+      Alert.alert("Error", error?.message || "Failed to complete setup. Please try again.");
     } finally {
       setIsLoading(false);
     }

@@ -9,7 +9,8 @@ import MessageList from "@/components/chat/MessageList";
 import MessageInput from "@/components/chat/MessageInput";
 
 export default function ChatScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams();
+  const id = typeof params.id === 'string' ? params.id : '';
   const router = useRouter();
   const { getThreadById, getMessagesByThreadId, sendMessage, markThreadAsRead } = useChat();
   const { user } = useAuth();
