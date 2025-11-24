@@ -160,7 +160,7 @@ export default function OrdersScreen() {
             <Package size={48} color={Colors.textSecondary} />
             <Text style={styles.emptyTitle}>No orders yet</Text>
             <Text style={styles.emptyDescription}>
-              When you purchase parts, they'll appear here
+              When you purchase parts, they&apos;ll appear here
             </Text>
           </View>
         ) : (

@@ -45,7 +45,7 @@ export default function PrivacyScreen() {
             <Users size={20} color={Colors.secondary} />
             <View style={styles.settingTextContainer}>
               <Text style={styles.settingText}>Show Activity</Text>
-              <Text style={styles.settingSubtext}>Display when you're online</Text>
+              <Text style={styles.settingSubtext}>Display when you&apos;re online</Text>
             </View>
           </View>
           <Switch
