@@ -87,7 +87,6 @@ export default function SelectTeamScreen() {
           rating: 0,
           review_count: 0,
           response_rate: 0,
-          avg_response_time: '0 minutes',
           blocked_users: [],
         });
 
