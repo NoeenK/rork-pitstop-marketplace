@@ -91,14 +91,7 @@ function RootLayoutNav() {
           title: "Reviews",
         }} 
       />
-      <Stack.Screen 
-        name="review/create" 
-        options={{ 
-          presentation: "modal",
-          headerShown: true,
-          title: "Write Review",
-        }} 
-      />
+
       <Stack.Screen 
         name="settings/notifications" 
         options={{ 
@@ -115,14 +108,7 @@ function RootLayoutNav() {
           title: "Privacy",
         }} 
       />
-      <Stack.Screen 
-        name="settings/account" 
-        options={{ 
-          presentation: "card",
-          headerShown: true,
-          title: "Account",
-        }} 
-      />
+
       <Stack.Screen 
         name="settings/appearance" 
         options={{ 
@@ -147,14 +133,7 @@ function RootLayoutNav() {
           title: "Help Center",
         }} 
       />
-      <Stack.Screen 
-        name="settings/about" 
-        options={{ 
-          presentation: "card",
-          headerShown: true,
-          title: "About",
-        }} 
-      />
+
       <Stack.Screen 
         name="settings/forum" 
         options={{ 
@@ -163,22 +142,8 @@ function RootLayoutNav() {
           title: "Community Forum",
         }} 
       />
-      <Stack.Screen 
-        name="settings/payments" 
-        options={{ 
-          presentation: "card",
-          headerShown: true,
-          title: "Payment Methods",
-        }} 
-      />
-      <Stack.Screen 
-        name="settings/shipping" 
-        options={{ 
-          presentation: "card",
-          headerShown: true,
-          title: "Shipping Address",
-        }} 
-      />
+
+
       <Stack.Screen 
         name="settings/verification" 
         options={{ 
@@ -227,14 +192,7 @@ function RootLayoutNav() {
           title: "My Sales",
         }} 
       />
-      <Stack.Screen 
-        name="report" 
-        options={{ 
-          presentation: "modal",
-          headerShown: true,
-          title: "Report",
-        }} 
-      />
+
     </Stack>
   );
 }
