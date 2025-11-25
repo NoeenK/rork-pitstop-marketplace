@@ -111,6 +111,7 @@ CREATE TABLE IF NOT EXISTS messages (
   sender_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   text TEXT NOT NULL,
   offer_id UUID,
+  read_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   CONSTRAINT text_length CHECK (char_length(text) > 0)
 );
@@ -132,6 +133,15 @@ CREATE POLICY "Users can send messages in their threads" ON messages
     EXISTS (
       SELECT 1 FROM chat_threads
       WHERE chat_threads.id = thread_id
+      AND (chat_threads.buyer_id = auth.uid() OR chat_threads.seller_id = auth.uid())
+    )
+  );
+
+CREATE POLICY "Users can update messages in their threads" ON messages
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM chat_threads
+      WHERE chat_threads.id = messages.thread_id
       AND (chat_threads.buyer_id = auth.uid() OR chat_threads.seller_id = auth.uid())
     )
   );
@@ -314,6 +324,48 @@ DROP TRIGGER IF EXISTS on_message_created ON messages;
 CREATE TRIGGER on_message_created
   AFTER INSERT ON messages
   FOR EACH ROW EXECUTE FUNCTION public.update_thread_last_message();
+
+-- Function to update unread count
+CREATE OR REPLACE FUNCTION public.update_unread_count()
+RETURNS TRIGGER AS $
+DECLARE
+  v_receiver_id UUID;
+BEGIN
+  SELECT CASE 
+    WHEN buyer_id = NEW.sender_id THEN seller_id 
+    ELSE buyer_id 
+  END INTO v_receiver_id
+  FROM chat_threads
+  WHERE id = NEW.thread_id;
+
+  UPDATE chat_threads
+  SET unread_count = COALESCE(unread_count, 0) + 1
+  WHERE id = NEW.thread_id;
+
+  RETURN NEW;
+END;
+$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger to update unread count when message is sent
+DROP TRIGGER IF EXISTS on_message_created_unread ON messages;
+CREATE TRIGGER on_message_created_unread
+  AFTER INSERT ON messages
+  FOR EACH ROW EXECUTE FUNCTION public.update_unread_count();
+
+-- Function to mark messages as read
+CREATE OR REPLACE FUNCTION mark_messages_as_read(
+  p_thread_id UUID,
+  p_user_id UUID
+)
+RETURNS void AS $
+BEGIN
+  UPDATE messages
+  SET read_at = NOW()
+  WHERE thread_id = p_thread_id
+    AND sender_id != p_user_id
+    AND read_at IS NULL;
+END;
+$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Enable Realtime for chat
 ALTER PUBLICATION supabase_realtime ADD TABLE chat_threads;
