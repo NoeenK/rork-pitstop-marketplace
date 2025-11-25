@@ -1,6 +1,6 @@
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform, TextInput } from "react-native";
 import { useRouter, Stack } from "expo-router";
-import { MessageCircle, ChevronRight, Camera, Edit3, Search, Filter } from "lucide-react-native";
+import { MessageCircle, ChevronRight, Camera, Edit3, Search, Filter, Plus } from "lucide-react-native";
 import { useChat } from "@/contexts/ChatContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -95,6 +95,7 @@ export default function ChatsScreen() {
                 if (Platform.OS !== "web") {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 }
+                router.push('/contacts');
               }}
             >
               <Edit3 size={22} color="#000000" />
@@ -230,6 +231,20 @@ export default function ChatsScreen() {
           })}
         </ScrollView>
       )}
+
+      {/* Floating Action Button */}
+      <TouchableOpacity
+        style={[styles.fab, { bottom: insets.bottom + 16 }]}
+        onPress={() => {
+          if (Platform.OS !== "web") {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          }
+          router.push('/contacts');
+        }}
+        activeOpacity={0.9}
+      >
+        <Plus size={28} color="#FFFFFF" strokeWidth={2.5} />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -398,6 +413,24 @@ const styles = StyleSheet.create({
   unreadText: {
     color: "#FFFFFF",
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "600" as const,
+  },
+  fab: {
+    position: "absolute" as const,
+    right: 16,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#000000",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });

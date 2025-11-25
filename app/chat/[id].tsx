@@ -12,7 +12,7 @@ export default function ChatScreen() {
   const params = useLocalSearchParams();
   const id = typeof params.id === 'string' ? params.id : '';
   const router = useRouter();
-  const { getThreadById, getMessagesByThreadId, sendMessage, markThreadAsRead } = useChat();
+  const { getThreadById, getMessagesByThreadId, sendMessage, markThreadAsRead, isUserOnline } = useChat();
   const { user } = useAuth();
   const [inputText, setInputText] = useState<string>("");
   const [isSending, setIsSending] = useState<boolean>(false);
@@ -143,11 +143,12 @@ export default function ChatScreen() {
     }
   };
 
-  // Determine status for header
+  const otherUserId = thread?.buyerId === user?.id ? thread?.sellerId : thread?.buyerId;
+  const userOnline = otherUserId ? isUserOnline(otherUserId) : false;
+
   const getStatus = (): "Online" | "Type.." | "Offline" => {
     if (isTyping) return "Type..";
-    // TODO: Implement actual online status check from Supabase presence
-    return "Online";
+    return userOnline ? "Online" : "Offline";
   };
 
   return (

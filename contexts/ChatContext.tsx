@@ -10,6 +10,7 @@ export const [ChatProvider, useChat] = createContextHook(() => {
   const [messages, setMessages] = useState<Record<string, Message[]>>({});
   const [offers, setOffers] = useState<Offer[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [onlineUsers, setOnlineUsers] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!user) return;
@@ -140,6 +141,54 @@ export const [ChatProvider, useChat] = createContextHook(() => {
 
     loadThreads();
 
+    const updateUserStatus = async (isOnline: boolean) => {
+      if (!user?.id) return;
+      
+      try {
+        await supabaseClient
+          .from('user_status')
+          .upsert({
+            user_id: user.id,
+            is_online: isOnline,
+            last_seen: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+      } catch (error) {
+        console.error("[ChatContext] Failed to update user status:", error);
+      }
+    };
+
+    updateUserStatus(true);
+
+    const statusChannel = supabaseClient
+      .channel('user_status_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_status',
+        },
+        (payload) => {
+          const status = payload.new as any;
+          if (status) {
+            setOnlineUsers(prev => ({
+              ...prev,
+              [status.user_id]: status.is_online,
+            }));
+          }
+        }
+      )
+      .subscribe();
+
+    const beforeUnloadHandler = () => {
+      updateUserStatus(false);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', beforeUnloadHandler);
+    }
+
     const threadChannel = supabaseClient
       .channel(`user_threads_${user.id}`)
       .on(
@@ -245,8 +294,14 @@ export const [ChatProvider, useChat] = createContextHook(() => {
       .subscribe();
 
     return () => {
+      updateUserStatus(false);
       threadChannel.unsubscribe();
       messageChannel.unsubscribe();
+      statusChannel.unsubscribe();
+      
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('beforeunload', beforeUnloadHandler);
+      }
     };
   }, [user]);
 
@@ -292,15 +347,12 @@ export const [ChatProvider, useChat] = createContextHook(() => {
     }
 
     return [];
-  }, [messages, threads]);
+  }, [messages]);
 
   const sendMessage = useCallback(async (threadId: string, text: string, senderId: string) => {
     try {
       setIsLoading(true);
       console.log("[ChatContext] Sending message to thread:", threadId);
-
-      const thread = threads.find(t => t.id === threadId);
-      const receiverId = thread?.buyerId === senderId ? thread?.sellerId : thread?.buyerId;
 
       const { data, error } = await supabaseClient
         .from('messages')
@@ -409,6 +461,71 @@ export const [ChatProvider, useChat] = createContextHook(() => {
       return newThread;
     } catch (error) {
       console.error("[ChatContext] Failed to create thread:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const createDirectThread = useCallback(async (user1Id: string, user2Id: string) => {
+    try {
+      setIsLoading(true);
+      console.log("[ChatContext] Creating direct thread between:", user1Id, user2Id);
+
+      const [buyerId, sellerId] = [user1Id, user2Id].sort();
+
+      const { data: existing } = await supabaseClient
+        .from('chat_threads')
+        .select('*')
+        .is('listing_id', null)
+        .eq('buyer_id', buyerId)
+        .eq('seller_id', sellerId)
+        .single();
+
+      if (existing) {
+        console.log("[ChatContext] Direct thread already exists:", existing.id);
+        const existingThread: ChatThread = {
+          id: existing.id,
+          listingId: undefined,
+          buyerId: existing.buyer_id,
+          sellerId: existing.seller_id,
+          lastMessageAt: new Date(existing.last_message_at),
+          unreadCount: existing.unread_count || 0,
+        };
+        return existingThread;
+      }
+
+      const { data, error } = await supabaseClient
+        .from('chat_threads')
+        .insert({
+          listing_id: null,
+          buyer_id: buyerId,
+          seller_id: sellerId,
+          last_message_at: new Date().toISOString(),
+          unread_count: 0,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error("[ChatContext] Error creating direct thread:", error);
+        throw error;
+      }
+
+      const newThread: ChatThread = {
+        id: data.id,
+        listingId: undefined,
+        buyerId: data.buyer_id,
+        sellerId: data.seller_id,
+        lastMessageAt: new Date(data.last_message_at),
+        unreadCount: data.unread_count || 0,
+      };
+
+      setThreads(prev => [newThread, ...prev]);
+      console.log("[ChatContext] Direct thread created:", newThread.id);
+      return newThread;
+    } catch (error) {
+      console.error("[ChatContext] Failed to create direct thread:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -532,17 +649,24 @@ export const [ChatProvider, useChat] = createContextHook(() => {
     }
   }, [user]);
 
+  const isUserOnline = useCallback((userId: string) => {
+    return onlineUsers[userId] || false;
+  }, [onlineUsers]);
+
   return useMemo(() => ({
     threads,
     messages,
     offers,
     isLoading,
+    onlineUsers,
     getThreadById,
     getMessagesByThreadId,
     sendMessage,
     createThread,
+    createDirectThread,
     createOffer,
     updateOfferStatus,
     markThreadAsRead,
-  }), [threads, messages, offers, isLoading, getThreadById, getMessagesByThreadId, sendMessage, createThread, createOffer, updateOfferStatus, markThreadAsRead]);
+    isUserOnline,
+  }), [threads, messages, offers, isLoading, onlineUsers, getThreadById, getMessagesByThreadId, sendMessage, createThread, createDirectThread, createOffer, updateOfferStatus, markThreadAsRead, isUserOnline]);
 });
