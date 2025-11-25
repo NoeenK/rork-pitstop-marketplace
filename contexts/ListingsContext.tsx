@@ -145,6 +145,7 @@ export const [ListingsProvider, useListings] = createContextHook(() => {
           description: listing.description,
           category: listing.category,
           condition: listing.condition,
+          price: listing.priceCents || 0,
           price_cents: listing.priceCents,
           is_swap_only: listing.isSwapOnly,
           city: listing.city,
