@@ -1,5 +1,6 @@
 import createContextHook from "@nkzw/create-context-hook";
 import { useState, useCallback, useMemo, useEffect } from "react";
+import { Platform } from "react-native";
 import { ChatThread, Message, Offer } from "@/types";
 import { supabaseClient } from "@/lib/supabase";
 import { useAuth } from "./AuthContext";
@@ -185,7 +186,7 @@ export const [ChatProvider, useChat] = createContextHook(() => {
       updateUserStatus(false);
     };
 
-    if (typeof window !== 'undefined') {
+    if (Platform.OS === 'web') {
       window.addEventListener('beforeunload', beforeUnloadHandler);
     }
 
@@ -299,7 +300,7 @@ export const [ChatProvider, useChat] = createContextHook(() => {
       messageChannel.unsubscribe();
       statusChannel.unsubscribe();
       
-      if (typeof window !== 'undefined') {
+      if (Platform.OS === 'web') {
         window.removeEventListener('beforeunload', beforeUnloadHandler);
       }
     };
