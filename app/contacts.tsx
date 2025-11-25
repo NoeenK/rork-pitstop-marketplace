@@ -30,25 +30,41 @@ export default function ContactsScreen() {
   const [isCreatingThread, setIsCreatingThread] = useState<string | null>(null);
 
   useEffect(() => {
-    loadUsers();
+    if (user?.id) {
+      loadUsers();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user?.id]);
 
   const loadUsers = async () => {
     try {
       setIsLoading(true);
+      
+      if (!user?.id) {
+        console.log("[ContactsScreen] No user ID found, skipping load");
+        setUsers([]);
+        return;
+      }
+
+      console.log("[ContactsScreen] Loading users, excluding current user:", user.id);
+      
       const { data, error } = await supabaseClient
         .from('profiles')
         .select('id, display_name, username, avatar_url, team_number, city, country')
-        .neq('id', user?.id || '')
+        .neq('id', user.id)
         .order('display_name', { ascending: true })
         .limit(100);
 
-      if (error) throw error;
+      if (error) {
+        console.error("[ContactsScreen] Supabase error:", JSON.stringify(error, null, 2));
+        throw error;
+      }
+
+      console.log(`[ContactsScreen] Loaded ${data?.length || 0} users`);
 
       const profiles: Profile[] = (data || []).map((profile: any) => ({
         id: profile.id,
-        displayName: profile.display_name || 'User',
+        displayName: profile.display_name || profile.full_name || 'User',
         username: profile.username,
         avatarUrl: profile.avatar_url,
         teamNumber: profile.team_number,
@@ -59,6 +75,7 @@ export default function ContactsScreen() {
       setUsers(profiles);
     } catch (error) {
       console.error("[ContactsScreen] Failed to load users:", error);
+      setUsers([]);
     } finally {
       setIsLoading(false);
     }
