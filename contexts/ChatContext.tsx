@@ -186,7 +186,7 @@ export const [ChatProvider, useChat] = createContextHook(() => {
       updateUserStatus(false);
     };
 
-    if (Platform.OS === 'web') {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
       window.addEventListener('beforeunload', beforeUnloadHandler);
     }
 
@@ -300,7 +300,7 @@ export const [ChatProvider, useChat] = createContextHook(() => {
       messageChannel.unsubscribe();
       statusChannel.unsubscribe();
       
-      if (Platform.OS === 'web') {
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
         window.removeEventListener('beforeunload', beforeUnloadHandler);
       }
     };
@@ -380,13 +380,11 @@ export const [ChatProvider, useChat] = createContextHook(() => {
         readAt: undefined,
       };
 
-      // Add message to local state immediately for instant UI update
       setMessages(prev => ({
         ...prev,
         [threadId]: [...(prev[threadId] || []), newMessage],
       }));
 
-      // Update thread with last message (unread count is handled by database trigger)
       setThreads(prev =>
         prev.map(thread =>
           thread.id === threadId
@@ -403,7 +401,7 @@ export const [ChatProvider, useChat] = createContextHook(() => {
     } finally {
       setIsLoading(false);
     }
-  }, [threads]);
+  }, []);
 
   const createThread = useCallback(async (listingId: string, buyerId: string, sellerId: string) => {
     try {

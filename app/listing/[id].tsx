@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSavedListings } from "@/contexts/SavedListingsContext";
 import { useReviews } from "@/contexts/ReviewsContext";
 import { useRecentlyViewed } from "@/contexts/RecentlyViewedContext";
+import { useChat } from "@/contexts/ChatContext";
 import Button from "@/components/Button";
 import { useEffect, useState, useRef } from "react";
 import { LinearGradient } from "expo-linear-gradient";
@@ -23,7 +24,9 @@ export default function ListingDetailScreen() {
   const { isSaved, toggleSaved } = useSavedListings();
   const { getReviewsForUser, getAverageRating } = useReviews();
   const { addToRecentlyViewed } = useRecentlyViewed();
+  const { createThread } = useChat();
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
+  const [isCreatingThread, setIsCreatingThread] = useState<boolean>(false);
   const scrollViewRef = useRef<any>(null);
   
   const listing = getListingById(id || "");
@@ -62,8 +65,26 @@ export default function ListingDetailScreen() {
 
   const isOwnListing = user?.id === listing.sellerId;
 
-  const handleChat = () => {
-    router.push(`/chat/${listing.id}`);
+  const handleChat = async () => {
+    if (!user || !listing || isCreatingThread) return;
+    
+    try {
+      setIsCreatingThread(true);
+      console.log("[ListingDetail] Creating thread for listing:", listing.id);
+      
+      if (Platform.OS !== "web") {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }
+      
+      const thread = await createThread(listing.id, user.id, listing.sellerId);
+      console.log("[ListingDetail] Thread created:", thread.id);
+      
+      router.push(`/chat/${thread.id}`);
+    } catch (error) {
+      console.error("[ListingDetail] Failed to create thread:", error);
+    } finally {
+      setIsCreatingThread(false);
+    }
   };
 
   const handleToggleSaved = () => {
