@@ -380,19 +380,8 @@ export const [ChatProvider, useChat] = createContextHook(() => {
         readAt: undefined,
       };
 
-      setMessages(prev => ({
-        ...prev,
-        [threadId]: [...(prev[threadId] || []), newMessage],
-      }));
-
-      setThreads(prev =>
-        prev.map(thread =>
-          thread.id === threadId
-            ? { ...thread, lastMessage: newMessage, lastMessageAt: new Date() }
-            : thread
-        )
-      );
-
+      // Don't update local state here - let the realtime subscription handle it
+      // This prevents duplicates
       console.log("[ChatContext] Message sent:", newMessage.id);
       return newMessage;
     } catch (error) {

@@ -7,6 +7,7 @@ import { Message } from "@/types";
 import ChatHeader from "@/components/chat/ChatHeader";
 import MessageList from "@/components/chat/MessageList";
 import MessageInput from "@/components/chat/MessageInput";
+import { supabaseClient } from "@/lib/supabase";
 
 export default function ChatScreen() {
   const params = useLocalSearchParams();
@@ -16,7 +17,7 @@ export default function ChatScreen() {
   const { user } = useAuth();
   const [inputText, setInputText] = useState<string>("");
   const [isSending, setIsSending] = useState<boolean>(false);
-  const [isTyping, setIsTyping] = useState<boolean>(false);
+  const [isTyping] = useState<boolean>(false);
   const scrollViewRef = useRef<any>(null);
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -49,7 +50,6 @@ export default function ChatScreen() {
   useEffect(() => {
     if (!id || !user) return;
 
-    const { supabaseClient } = require("@/lib/supabase");
     const channel = supabaseClient
       .channel(`thread_messages_${id}`)
       .on(
@@ -61,6 +61,7 @@ export default function ChatScreen() {
           filter: `thread_id=eq.${id}`,
         },
         async (payload: any) => {
+          console.log("[ChatScreen] Realtime message received:", payload);
           const newMsg = payload.new;
           const newMessage: Message = {
             id: newMsg.id,
@@ -71,10 +72,19 @@ export default function ChatScreen() {
           };
           
           setMessages(prev => {
-            // Avoid duplicates
-            if (prev.some(m => m.id === newMessage.id)) {
+            // Avoid duplicates by checking both id and text
+            const isDuplicate = prev.some(m => 
+              m.id === newMessage.id || 
+              (m.text === newMessage.text && m.senderId === newMessage.senderId && 
+               Math.abs(m.createdAt.getTime() - newMessage.createdAt.getTime()) < 1000)
+            );
+            
+            if (isDuplicate) {
+              console.log("[ChatScreen] Skipping duplicate message");
               return prev;
             }
+            
+            console.log("[ChatScreen] Adding new message to UI");
             return [...prev, newMessage];
           });
 
@@ -87,6 +97,7 @@ export default function ChatScreen() {
       .subscribe();
 
     return () => {
+      console.log("[ChatScreen] Unsubscribing from realtime");
       channel.unsubscribe();
     };
   }, [id, user]);
@@ -120,23 +131,18 @@ export default function ChatScreen() {
     setIsSending(true);
 
     try {
+      console.log("[ChatScreen] Sending message:", text);
       await sendMessage(id || "", text, user.id);
-      // Optimistically add message to UI
-      const optimisticMessage: Message = {
-        id: `temp-${Date.now()}`,
-        threadId: id || "",
-        senderId: user.id,
-        text,
-        createdAt: new Date(),
-      };
-      setMessages(prev => [...prev, optimisticMessage]);
+      
+      // Don't add optimistic message - let realtime subscription handle it
+      // This prevents duplicates
       
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
     } catch (error) {
       console.error("[ChatScreen] Failed to send message:", error);
-      // Revert optimistic update on error
+      // Revert input on error
       setInputText(text);
     } finally {
       setIsSending(false);
