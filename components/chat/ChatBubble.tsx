@@ -70,10 +70,13 @@ const ChatBubble = memo(function ChatBubble({
     </View>
   );
 }, (prevProps, nextProps) => {
+  const prevReadAt = prevProps.message.readAt?.getTime();
+  const nextReadAt = nextProps.message.readAt?.getTime();
+  
   return (
     prevProps.message.id === nextProps.message.id &&
     prevProps.message.text === nextProps.message.text &&
-    prevProps.message.readAt === nextProps.message.readAt &&
+    prevReadAt === nextReadAt &&
     prevProps.isOwn === nextProps.isOwn &&
     prevProps.showAvatar === nextProps.showAvatar &&
     prevProps.avatarUrl === nextProps.avatarUrl &&
