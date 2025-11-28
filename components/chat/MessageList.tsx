@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
 import { Message } from "@/types";
 import ChatBubble from "./ChatBubble";
-import React, { memo } from "react";
+import React from "react";
 
 interface MessageListProps {
   messages: Message[];
@@ -14,7 +14,7 @@ interface MessageListProps {
   scrollViewRef?: any;
 }
 
-const MessageList = memo(function MessageList({
+function MessageList({
   messages,
   currentUserId,
   otherUser,
@@ -97,9 +97,9 @@ const MessageList = memo(function MessageList({
       })}
     </ScrollView>
   );
-});
+}
 
-export default MessageList;
+export default React.memo(MessageList);
 
 const styles = StyleSheet.create({
   container: {
