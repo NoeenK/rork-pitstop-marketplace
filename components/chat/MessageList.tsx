@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
 import { Message } from "@/types";
 import ChatBubble from "./ChatBubble";
-import React, { useEffect } from "react";
+import React from "react";
 
 interface MessageListProps {
   messages: Message[];
@@ -22,15 +22,6 @@ function MessageList({
   isLoading = false,
   scrollViewRef,
 }: MessageListProps) {
-  const messageCount = messages.length;
-  
-  useEffect(() => {
-    if (messageCount > 0 && scrollViewRef?.current) {
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: false });
-      }, 100);
-    }
-  }, [messageCount, scrollViewRef]);
   const formatMessageDate = (date: Date) => {
     const messageDate = new Date(date);
     const now = new Date();
@@ -108,7 +99,21 @@ function MessageList({
   );
 }
 
-export default React.memo(MessageList);
+export default React.memo(MessageList, (prevProps, nextProps) => {
+  if (prevProps.isLoading !== nextProps.isLoading) return false;
+  if (prevProps.currentUserId !== nextProps.currentUserId) return false;
+  if (prevProps.otherUser?.id !== nextProps.otherUser?.id) return false;
+  if (prevProps.messages.length !== nextProps.messages.length) return false;
+  
+  if (prevProps.messages.length > 0 && nextProps.messages.length > 0) {
+    const lastPrev = prevProps.messages[prevProps.messages.length - 1];
+    const lastNext = nextProps.messages[nextProps.messages.length - 1];
+    if (lastPrev.id !== lastNext.id) return false;
+    if (lastPrev.readAt !== lastNext.readAt) return false;
+  }
+  
+  return true;
+});
 
 const styles = StyleSheet.create({
   container: {

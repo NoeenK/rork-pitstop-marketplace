@@ -24,6 +24,7 @@ export default function ChatScreen() {
   const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(true);
   const messageIdsRef = useRef<Set<string>>(new Set());
   const channelRef = useRef<any>(null);
+  const isInitialLoadRef = useRef<boolean>(true);
   
   const thread = getThreadById(id || "");
   const otherUser = useMemo(() => {
@@ -37,10 +38,16 @@ export default function ChatScreen() {
       
       setIsLoadingMessages(true);
       messageIdsRef.current.clear();
+      isInitialLoadRef.current = true;
       try {
         const loadedMessages = await getMessagesByThreadId(id);
         loadedMessages.forEach(msg => messageIdsRef.current.add(msg.id));
         setMessages(loadedMessages);
+        
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: false });
+          isInitialLoadRef.current = false;
+        }, 100);
       } catch (error) {
         console.error("[ChatScreen] Failed to load messages:", error);
       } finally {
@@ -98,9 +105,13 @@ export default function ChatScreen() {
               return prev;
             }
             const updated = [...prev, newMessage];
-            setTimeout(() => {
-              scrollViewRef.current?.scrollToEnd({ animated: true });
-            }, 50);
+            
+            if (!isInitialLoadRef.current) {
+              setTimeout(() => {
+                scrollViewRef.current?.scrollToEnd({ animated: true });
+              }, 100);
+            }
+            
             return updated;
           });
         }
