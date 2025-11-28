@@ -230,8 +230,35 @@ export const [ChatProvider, useChat] = createContextHook(() => {
           table: 'messages',
         },
         async (payload) => {
-          console.log("[ChatContext] New message - refreshing threads");
-          await loadThreads();
+          console.log("[ChatContext] New message - updating thread list");
+          const newMsg = payload.new as any;
+          
+          setThreads(prev => {
+            const existingThreadIndex = prev.findIndex(t => t.id === newMsg.thread_id);
+            if (existingThreadIndex === -1) {
+              loadThreads();
+              return prev;
+            }
+            
+            const updatedThreads = [...prev];
+            const thread = updatedThreads[existingThreadIndex];
+            updatedThreads.splice(existingThreadIndex, 1);
+            updatedThreads.unshift({
+              ...thread,
+              lastMessageAt: new Date(newMsg.created_at),
+              lastMessage: {
+                id: newMsg.id,
+                threadId: newMsg.thread_id,
+                senderId: newMsg.sender_id,
+                text: newMsg.text,
+                createdAt: new Date(newMsg.created_at),
+                readAt: undefined,
+              },
+              unreadCount: newMsg.sender_id !== user.id ? (thread.unreadCount || 0) + 1 : thread.unreadCount || 0,
+            });
+            
+            return updatedThreads;
+          });
         }
       )
       .on(
