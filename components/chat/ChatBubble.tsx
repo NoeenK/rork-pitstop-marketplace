@@ -49,12 +49,10 @@ export default function ChatBubble({
           )}
         </View>
       )}
-      <View style={styles.messageContainer}>
-        <View style={[styles.bubble, isOwn ? styles.bubbleOwn : styles.bubbleOther]}>
-          <Text style={[styles.text, isOwn && styles.textOwn]}>
-            {message.text}
-          </Text>
-        </View>
+      <View style={[styles.bubble, isOwn ? styles.bubbleOwn : styles.bubbleOther]}>
+        <Text style={[styles.text, isOwn && styles.textOwn]}>
+          {message.text}
+        </Text>
         <View style={[styles.metaContainer, isOwn && styles.metaContainerOwn]}>
           <Text style={styles.timeText}>{formatTime(message.createdAt)}</Text>
           {isOwn && (
@@ -76,7 +74,8 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "flex-end",
-    marginBottom: 12,
+    marginBottom: 8,
+    paddingHorizontal: 2,
   },
   containerOwn: {
     justifyContent: "flex-end",
@@ -85,6 +84,7 @@ const styles = StyleSheet.create({
     width: 32,
     marginRight: 8,
     alignItems: "center",
+    flexShrink: 0,
   },
   avatar: {
     width: 32,
@@ -102,36 +102,37 @@ const styles = StyleSheet.create({
     fontWeight: "600" as const,
     color: "#000000",
   },
-  messageContainer: {
-    maxWidth: "70%",
-  },
   bubble: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    maxWidth: "75%",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderRadius: 18,
+    alignSelf: "flex-start",
   },
   bubbleOwn: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#007AFF",
     borderBottomRightRadius: 4,
+    alignSelf: "flex-end",
   },
   bubbleOther: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#E9E9EB",
     borderBottomLeftRadius: 4,
   },
   text: {
     fontSize: 16,
-    color: "#111111",
-    lineHeight: 22,
-    letterSpacing: -0.2,
+    color: "#000000",
+    lineHeight: 21,
+    letterSpacing: -0.3,
+    flexWrap: "wrap",
   },
   textOwn: {
-    color: "#111111",
+    color: "#FFFFFF",
   },
   metaContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 4,
-    paddingHorizontal: 4,
+    marginTop: 3,
+    paddingHorizontal: 2,
   },
   metaContainerOwn: {
     justifyContent: "flex-end",

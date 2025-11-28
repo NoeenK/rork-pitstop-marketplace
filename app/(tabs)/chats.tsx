@@ -17,6 +17,26 @@ export default function ChatsScreen() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedTab, setSelectedTab] = useState<string>("All");
 
+  const getFilteredThreadsByTab = () => {
+    if (selectedTab === "All") return filteredThreads;
+    
+    if (selectedTab === "Buying") {
+      return filteredThreads.filter(thread => thread.buyerId === user?.id);
+    }
+    
+    if (selectedTab === "Selling") {
+      return filteredThreads.filter(thread => thread.sellerId === user?.id);
+    }
+    
+    if (selectedTab === "New") {
+      return filteredThreads.filter(thread => thread.unreadCount > 0);
+    }
+    
+    return filteredThreads;
+  };
+
+  const displayedThreads = getFilteredThreadsByTab();
+
   const formatTime = (date: Date) => {
     const now = new Date();
     const messageDate = new Date(date);
@@ -132,7 +152,7 @@ export default function ChatsScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.tabsContainer}
         >
-          {["All", "Contacts", "Unknown", "New"].map((tab) => (
+          {["All", "Buying", "Selling", "New"].map((tab) => (
             <TouchableOpacity
               key={tab}
               style={[
@@ -160,7 +180,7 @@ export default function ChatsScreen() {
       </View>
 
       {/* Conversation List */}
-      {filteredThreads.length === 0 ? (
+      {displayedThreads.length === 0 ? (
         <EmptyState
           icon={MessageCircle}
           title="No messages yet"
@@ -172,7 +192,7 @@ export default function ChatsScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
         >
-          {filteredThreads.map((thread) => {
+          {displayedThreads.map((thread) => {
             const otherUser = thread.buyerId === user?.id ? thread.seller : thread.buyer;
             const isUnread = thread.unreadCount > 0;
             const lastMessageText = thread.lastMessage?.text || "Tap to start chatting";
