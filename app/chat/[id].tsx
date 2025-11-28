@@ -1,6 +1,6 @@
 import { View, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
 import { useLocalSearchParams, Stack, useRouter } from "expo-router";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useChat } from "@/contexts/ChatContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Message } from "@/types";
@@ -22,8 +22,14 @@ export default function ChatScreen() {
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(true);
-  const thread = getThreadById(id || "");
   const messageIdsRef = useRef<Set<string>>(new Set());
+  const channelRef = useRef<any>(null);
+  
+  const thread = getThreadById(id || "");
+  const otherUser = useMemo(() => {
+    if (!thread || !user) return undefined;
+    return thread.buyerId === user.id ? thread.seller : thread.buyer;
+  }, [thread, user]);
 
   useEffect(() => {
     const loadMessages = async () => {
@@ -49,12 +55,15 @@ export default function ChatScreen() {
     }
   }, [id, markThreadAsRead, getMessagesByThreadId]);
 
-  // Subscribe to real-time message updates
   useEffect(() => {
     if (!id || !user) return;
 
+    if (channelRef.current) {
+      channelRef.current.unsubscribe();
+    }
+
     const channel = supabaseClient
-      .channel(`thread_messages_${id}`)
+      .channel(`thread_messages_${id}_${Date.now()}`)
       .on(
         "postgres_changes",
         {
@@ -67,8 +76,11 @@ export default function ChatScreen() {
           const newMsg = payload.new;
           
           if (messageIdsRef.current.has(newMsg.id)) {
+            console.log("[ChatScreen] Skipping duplicate message:", newMsg.id);
             return;
           }
+          
+          console.log("[ChatScreen] New message received:", newMsg.id);
           
           const newMessage: Message = {
             id: newMsg.id,
@@ -80,17 +92,25 @@ export default function ChatScreen() {
           
           messageIdsRef.current.add(newMessage.id);
           
-          setMessages(prev => [...prev, newMessage]);
-
-          setTimeout(() => {
-            scrollViewRef.current?.scrollToEnd({ animated: false });
-          }, 50);
+          setMessages(prev => {
+            if (prev.some(m => m.id === newMessage.id)) {
+              console.log("[ChatScreen] Message already in state:", newMessage.id);
+              return prev;
+            }
+            return [...prev, newMessage];
+          });
         }
       )
       .subscribe();
 
+    channelRef.current = channel;
+
     return () => {
-      channel.unsubscribe();
+      if (channelRef.current) {
+        console.log("[ChatScreen] Unsubscribing from channel");
+        channelRef.current.unsubscribe();
+        channelRef.current = null;
+      }
     };
   }, [id, user]);
 
@@ -107,8 +127,6 @@ export default function ChatScreen() {
       </View>
     );
   }
-
-  const otherUser = thread.buyerId === user?.id ? thread.seller : thread.buyer;
 
   const handleSend = async () => {
     if (!inputText.trim() || !user || isSending) return;
@@ -165,10 +183,7 @@ export default function ChatScreen() {
       <MessageList
         messages={messages}
         currentUserId={user?.id || ""}
-        otherUser={{
-          displayName: otherUser?.displayName,
-          avatarUrl: otherUser?.avatarUrl,
-        }}
+        otherUser={otherUser}
         isLoading={isLoadingMessages}
         scrollViewRef={scrollViewRef}
       />

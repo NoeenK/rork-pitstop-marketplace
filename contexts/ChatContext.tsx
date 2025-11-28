@@ -230,38 +230,8 @@ export const [ChatProvider, useChat] = createContextHook(() => {
           table: 'messages',
         },
         async (payload) => {
-          console.log("[ChatContext] New message in any thread:", payload);
-          const newMsg = payload.new as any;
-          
-          const { data: threadData } = await supabaseClient
-            .from('chat_threads')
-            .select('id, buyer_id, seller_id')
-            .eq('id', newMsg.thread_id)
-            .single();
-          
-          if (threadData && (threadData.buyer_id === user.id || threadData.seller_id === user.id)) {
-            const newMessage: Message = {
-              id: newMsg.id,
-              threadId: newMsg.thread_id,
-              senderId: newMsg.sender_id,
-              text: newMsg.text,
-              createdAt: new Date(newMsg.created_at),
-              readAt: newMsg.read_at ? new Date(newMsg.read_at) : undefined,
-            };
-            
-            setMessages(prev => {
-              const existingMessages = prev[newMsg.thread_id] || [];
-              if (existingMessages.some(m => m.id === newMessage.id)) {
-                return prev;
-              }
-              return {
-                ...prev,
-                [newMsg.thread_id]: [...existingMessages, newMessage],
-              };
-            });
-            
-            await loadThreads();
-          }
+          console.log("[ChatContext] New message - refreshing threads");
+          await loadThreads();
         }
       )
       .on(

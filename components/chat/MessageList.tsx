@@ -1,12 +1,13 @@
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
 import { Message } from "@/types";
 import ChatBubble from "./ChatBubble";
-import React from "react";
+import React, { useEffect } from "react";
 
 interface MessageListProps {
   messages: Message[];
   currentUserId: string;
   otherUser?: {
+    id?: string;
     displayName?: string;
     avatarUrl?: string;
   };
@@ -21,6 +22,11 @@ function MessageList({
   isLoading = false,
   scrollViewRef,
 }: MessageListProps) {
+  useEffect(() => {
+    if (messages.length > 0 && scrollViewRef?.current) {
+      scrollViewRef.current.scrollToEnd({ animated: false });
+    }
+  }, [messages.length, scrollViewRef]);
   const formatMessageDate = (date: Date) => {
     const messageDate = new Date(date);
     const now = new Date();
@@ -62,8 +68,11 @@ function MessageList({
       style={styles.container}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
-      removeClippedSubviews={true}
-      scrollEventThrottle={16}
+      removeClippedSubviews={false}
+      maintainVisibleContentPosition={{
+        minIndexForVisible: 0,
+        autoscrollToTopThreshold: 10
+      }}
     >
       {messages.map((message, index) => {
         const isOwn = message.senderId === currentUserId;
