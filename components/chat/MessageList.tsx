@@ -97,20 +97,6 @@ const MessageList = memo(function MessageList({
       })}
     </ScrollView>
   );
-}, (prevProps, nextProps) => {
-  if (prevProps.isLoading !== nextProps.isLoading) return false;
-  if (prevProps.currentUserId !== nextProps.currentUserId) return false;
-  if (prevProps.otherUser?.id !== nextProps.otherUser?.id) return false;
-  if (prevProps.messages.length !== nextProps.messages.length) return false;
-  
-  if (prevProps.messages.length > 0 && nextProps.messages.length > 0) {
-    const lastPrev = prevProps.messages[prevProps.messages.length - 1];
-    const lastNext = nextProps.messages[nextProps.messages.length - 1];
-    if (lastPrev.id !== lastNext.id) return false;
-    if (lastPrev.readAt !== lastNext.readAt) return false;
-  }
-  
-  return true;
 });
 
 export default MessageList;
