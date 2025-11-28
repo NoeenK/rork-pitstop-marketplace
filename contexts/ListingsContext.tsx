@@ -74,7 +74,18 @@ export const [ListingsProvider, useListings] = createContextHook(() => {
       } catch (error: any) {
         console.error("[ListingsContext] Unexpected error loading listings:", error);
         console.error("[ListingsContext] Error message:", error?.message);
-        console.error("[ListingsContext] Error details:", JSON.stringify(error, null, 2));
+        console.error("[ListingsContext] Error name:", error?.name);
+        console.error("[ListingsContext] Error stack:", error?.stack);
+        
+        if (error?.message?.includes('fetch')) {
+          console.error("[ListingsContext] Network error detected. Possible causes:");
+          console.error("  1. Supabase URL is incorrect or unreachable");
+          console.error("  2. CORS issues on web");
+          console.error("  3. No internet connection");
+          console.error("  4. Supabase project is paused or deleted");
+          console.error("  Current Supabase URL:", process.env.EXPO_PUBLIC_SUPABASE_URL);
+        }
+        
         setListings([]);
       } finally {
         setIsLoading(false);

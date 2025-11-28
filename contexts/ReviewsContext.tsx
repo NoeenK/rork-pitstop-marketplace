@@ -53,7 +53,18 @@ export const [ReviewsProvider, useReviews] = createContextHook(() => {
       } catch (error: any) {
         console.error("[ReviewsContext] Unexpected error loading reviews:", error);
         console.error("[ReviewsContext] Error message:", error?.message);
-        console.error("[ReviewsContext] Error details:", JSON.stringify(error, null, 2));
+        console.error("[ReviewsContext] Error name:", error?.name);
+        console.error("[ReviewsContext] Error stack:", error?.stack);
+        
+        if (error?.message?.includes('fetch')) {
+          console.error("[ReviewsContext] Network error detected. Possible causes:");
+          console.error("  1. Supabase URL is incorrect or unreachable");
+          console.error("  2. CORS issues on web");
+          console.error("  3. No internet connection");
+          console.error("  4. Supabase project is paused or deleted");
+          console.error("  Current Supabase URL:", process.env.EXPO_PUBLIC_SUPABASE_URL);
+        }
+        
         setReviews([]);
       } finally {
         setIsLoading(false);

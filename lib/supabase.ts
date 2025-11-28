@@ -15,8 +15,33 @@ const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    flowType: 'pkce', // Use PKCE flow for better security
+    flowType: 'pkce',
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
+  },
+  global: {
+    headers: {
+      'apikey': supabaseAnonKey,
+    },
   },
 });
+
+console.log('[Supabase] Client initialized with URL:', supabaseUrl);
+
+(async () => {
+  try {
+    const { count, error } = await supabaseClient.from('profiles').select('count', { count: 'exact', head: true });
+    if (error) {
+      console.error('[Supabase] Connection test failed:', error);
+    } else {
+      console.log('[Supabase] Connection test successful, profiles count:', count);
+    }
+  } catch (err) {
+    console.error('[Supabase] Connection test error:', err);
+  }
+})();
 
 export { supabaseClient };
