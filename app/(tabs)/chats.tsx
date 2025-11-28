@@ -17,6 +17,13 @@ export default function ChatsScreen() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedTab, setSelectedTab] = useState<string>("All");
 
+  const filteredThreads = threads.filter(thread => {
+    const otherUser = thread.buyerId === user?.id ? thread.seller : thread.buyer;
+    const query = searchQuery.toLowerCase();
+    return otherUser?.displayName?.toLowerCase().includes(query) || 
+           thread.lastMessage?.text?.toLowerCase().includes(query);
+  });
+
   const getFilteredThreadsByTab = () => {
     if (selectedTab === "All") return filteredThreads;
     
@@ -68,13 +75,6 @@ export default function ChatsScreen() {
     }
     router.push(`/chat/${threadId}`);
   };
-
-  const filteredThreads = threads.filter(thread => {
-    const otherUser = thread.buyerId === user?.id ? thread.seller : thread.buyer;
-    const query = searchQuery.toLowerCase();
-    return otherUser?.displayName?.toLowerCase().includes(query) || 
-           thread.lastMessage?.text?.toLowerCase().includes(query);
-  });
 
   return (
     <View style={styles.container}>
