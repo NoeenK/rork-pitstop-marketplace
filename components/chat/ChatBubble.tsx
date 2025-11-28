@@ -69,6 +69,16 @@ const ChatBubble = memo(function ChatBubble({
       </View>
     </View>
   );
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.message.id === nextProps.message.id &&
+    prevProps.message.text === nextProps.message.text &&
+    prevProps.message.readAt === nextProps.message.readAt &&
+    prevProps.isOwn === nextProps.isOwn &&
+    prevProps.showAvatar === nextProps.showAvatar &&
+    prevProps.avatarUrl === nextProps.avatarUrl &&
+    prevProps.displayName === nextProps.displayName
+  );
 });
 
 export default ChatBubble;

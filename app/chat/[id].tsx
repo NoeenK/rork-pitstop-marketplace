@@ -97,7 +97,11 @@ export default function ChatScreen() {
               console.log("[ChatScreen] Message already in state:", newMessage.id);
               return prev;
             }
-            return [...prev, newMessage];
+            const updated = [...prev, newMessage];
+            setTimeout(() => {
+              scrollViewRef.current?.scrollToEnd({ animated: true });
+            }, 50);
+            return updated;
           });
         }
       )

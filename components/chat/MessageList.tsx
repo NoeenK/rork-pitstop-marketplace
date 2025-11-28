@@ -22,11 +22,15 @@ function MessageList({
   isLoading = false,
   scrollViewRef,
 }: MessageListProps) {
+  const messageCount = messages.length;
+  
   useEffect(() => {
-    if (messages.length > 0 && scrollViewRef?.current) {
-      scrollViewRef.current.scrollToEnd({ animated: false });
+    if (messageCount > 0 && scrollViewRef?.current) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: false });
+      }, 100);
     }
-  }, [messages.length, scrollViewRef]);
+  }, [messageCount, scrollViewRef]);
   const formatMessageDate = (date: Date) => {
     const messageDate = new Date(date);
     const now = new Date();
@@ -69,10 +73,6 @@ function MessageList({
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
       removeClippedSubviews={false}
-      maintainVisibleContentPosition={{
-        minIndexForVisible: 0,
-        autoscrollToTopThreshold: 10
-      }}
     >
       {messages.map((message, index) => {
         const isOwn = message.senderId === currentUserId;
