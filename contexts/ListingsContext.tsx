@@ -44,6 +44,13 @@ export const [ListingsProvider, useListings] = createContextHook(() => {
       try {
         setIsLoading(true);
         console.log("[ListingsContext] Loading listings from Supabase");
+        console.log("[ListingsContext] Supabase URL:", process.env.EXPO_PUBLIC_SUPABASE_URL);
+
+        if (!supabaseClient) {
+          console.error("[ListingsContext] Supabase client not initialized");
+          setListings([]);
+          return;
+        }
 
         const { data, error } = await supabaseClient
           .from("listings")
@@ -55,8 +62,10 @@ export const [ListingsProvider, useListings] = createContextHook(() => {
           .order("created_at", { ascending: false });
 
         if (error) {
-          console.error("[ListingsContext] Error loading listings:", JSON.stringify(error, null, 2));
-          console.error("[ListingsContext] Error details:", error);
+          console.error("[ListingsContext] Supabase error:", error.message);
+          console.error("[ListingsContext] Error code:", error.code);
+          console.error("[ListingsContext] Error details:", error.details);
+          console.error("[ListingsContext] Error hint:", error.hint);
           setListings([]);
           return;
         }
@@ -66,24 +75,22 @@ export const [ListingsProvider, useListings] = createContextHook(() => {
             mapListingFromDb(item, item.seller)
           );
           setListings(formattedListings);
-          console.log("[ListingsContext] Loaded listings:", formattedListings.length);
+          console.log("[ListingsContext] Successfully loaded listings:", formattedListings.length);
         } else {
           setListings([]);
-          console.log("[ListingsContext] No listings found");
+          console.log("[ListingsContext] No listings found (database is empty)");
         }
       } catch (error: any) {
-        console.error("[ListingsContext] Unexpected error loading listings:", error);
+        console.error("[ListingsContext] Fatal error:", error);
+        console.error("[ListingsContext] Error type:", error?.constructor?.name);
         console.error("[ListingsContext] Error message:", error?.message);
-        console.error("[ListingsContext] Error name:", error?.name);
-        console.error("[ListingsContext] Error stack:", error?.stack);
         
-        if (error?.message?.includes('fetch')) {
-          console.error("[ListingsContext] Network error detected. Possible causes:");
-          console.error("  1. Supabase URL is incorrect or unreachable");
-          console.error("  2. CORS issues on web");
-          console.error("  3. No internet connection");
-          console.error("  4. Supabase project is paused or deleted");
-          console.error("  Current Supabase URL:", process.env.EXPO_PUBLIC_SUPABASE_URL);
+        if (error?.message?.includes('fetch') || error?.message?.includes('network')) {
+          console.error("[ListingsContext] Network/Fetch error - checking connection...");
+          console.error("  - Check if Supabase project is active");
+          console.error("  - Check internet connection");
+          console.error("  - On web: Check CORS settings");
+          console.error("  - Supabase URL:", process.env.EXPO_PUBLIC_SUPABASE_URL);
         }
         
         setListings([]);

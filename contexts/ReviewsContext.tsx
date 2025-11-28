@@ -24,6 +24,13 @@ export const [ReviewsProvider, useReviews] = createContextHook(() => {
       try {
         setIsLoading(true);
         console.log("[ReviewsContext] Loading reviews from Supabase");
+        console.log("[ReviewsContext] Supabase URL:", process.env.EXPO_PUBLIC_SUPABASE_URL);
+
+        if (!supabaseClient) {
+          console.error("[ReviewsContext] Supabase client not initialized");
+          setReviews([]);
+          return;
+        }
 
         const { data, error } = await supabaseClient
           .from("reviews")
@@ -34,8 +41,10 @@ export const [ReviewsProvider, useReviews] = createContextHook(() => {
           .order("created_at", { ascending: false });
 
         if (error) {
-          console.error("[ReviewsContext] Error loading reviews:", JSON.stringify(error, null, 2));
-          console.error("[ReviewsContext] Error details:", error);
+          console.error("[ReviewsContext] Supabase error:", error.message);
+          console.error("[ReviewsContext] Error code:", error.code);
+          console.error("[ReviewsContext] Error details:", error.details);
+          console.error("[ReviewsContext] Error hint:", error.hint);
           setReviews([]);
           return;
         }
@@ -45,24 +54,22 @@ export const [ReviewsProvider, useReviews] = createContextHook(() => {
             mapReviewFromDb(item, item.reviewer)
           );
           setReviews(formattedReviews);
-          console.log("[ReviewsContext] Loaded reviews:", formattedReviews.length);
+          console.log("[ReviewsContext] Successfully loaded reviews:", formattedReviews.length);
         } else {
           setReviews([]);
-          console.log("[ReviewsContext] No reviews found");
+          console.log("[ReviewsContext] No reviews found (database is empty)");
         }
       } catch (error: any) {
-        console.error("[ReviewsContext] Unexpected error loading reviews:", error);
+        console.error("[ReviewsContext] Fatal error:", error);
+        console.error("[ReviewsContext] Error type:", error?.constructor?.name);
         console.error("[ReviewsContext] Error message:", error?.message);
-        console.error("[ReviewsContext] Error name:", error?.name);
-        console.error("[ReviewsContext] Error stack:", error?.stack);
         
-        if (error?.message?.includes('fetch')) {
-          console.error("[ReviewsContext] Network error detected. Possible causes:");
-          console.error("  1. Supabase URL is incorrect or unreachable");
-          console.error("  2. CORS issues on web");
-          console.error("  3. No internet connection");
-          console.error("  4. Supabase project is paused or deleted");
-          console.error("  Current Supabase URL:", process.env.EXPO_PUBLIC_SUPABASE_URL);
+        if (error?.message?.includes('fetch') || error?.message?.includes('network')) {
+          console.error("[ReviewsContext] Network/Fetch error - checking connection...");
+          console.error("  - Check if Supabase project is active");
+          console.error("  - Check internet connection");
+          console.error("  - On web: Check CORS settings");
+          console.error("  - Supabase URL:", process.env.EXPO_PUBLIC_SUPABASE_URL);
         }
         
         setReviews([]);

@@ -17,14 +17,14 @@ export default function ChatsScreen() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedTab, setSelectedTab] = useState<string>("All");
 
-  const filteredThreads = threads.filter(thread => {
-    const otherUser = thread.buyerId === user?.id ? thread.seller : thread.buyer;
-    const query = searchQuery.toLowerCase();
-    return otherUser?.displayName?.toLowerCase().includes(query) || 
-           thread.lastMessage?.text?.toLowerCase().includes(query);
-  });
-
   const getFilteredThreadsByTab = () => {
+    const filteredThreads = threads.filter(thread => {
+      const otherUser = thread.buyerId === user?.id ? thread.seller : thread.buyer;
+      const query = searchQuery.toLowerCase();
+      return otherUser?.displayName?.toLowerCase().includes(query) || 
+             thread.lastMessage?.text?.toLowerCase().includes(query);
+    });
+
     if (selectedTab === "All") return filteredThreads;
     
     if (selectedTab === "Buying") {
