@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
 import { Message } from "@/types";
 import ChatBubble from "./ChatBubble";
-import React from "react";
+import React, { memo } from "react";
 
 interface MessageListProps {
   messages: Message[];
@@ -14,7 +14,7 @@ interface MessageListProps {
   scrollViewRef?: any;
 }
 
-export default function MessageList({
+const MessageList = memo(function MessageList({
   messages,
   currentUserId,
   otherUser,
@@ -62,6 +62,8 @@ export default function MessageList({
       style={styles.container}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
+      removeClippedSubviews={true}
+      scrollEventThrottle={16}
     >
       {messages.map((message, index) => {
         const isOwn = message.senderId === currentUserId;
@@ -75,7 +77,7 @@ export default function MessageList({
         const showAvatar = !isOwn && (!nextMessage || nextMessage.senderId !== message.senderId);
 
         return (
-          <React.Fragment key={`msg-${message.id}`}>
+          <View key={message.id} style={styles.messageContainer}>
             {showDateSeparator && (
               <View style={styles.dateSeparator}>
                 <Text style={styles.dateText}>
@@ -90,12 +92,14 @@ export default function MessageList({
               avatarUrl={otherUser?.avatarUrl}
               displayName={otherUser?.displayName}
             />
-          </React.Fragment>
+          </View>
         );
       })}
     </ScrollView>
   );
-}
+});
+
+export default MessageList;
 
 const styles = StyleSheet.create({
   container: {
@@ -139,6 +143,9 @@ const styles = StyleSheet.create({
     color: "#8E8E93",
     textAlign: "center",
     fontWeight: "500",
+  },
+  messageContainer: {
+    width: "100%",
   },
 });
 

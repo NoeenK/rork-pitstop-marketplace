@@ -23,14 +23,17 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(true);
   const thread = getThreadById(id || "");
+  const messageIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const loadMessages = async () => {
       if (!id) return;
       
       setIsLoadingMessages(true);
+      messageIdsRef.current.clear();
       try {
         const loadedMessages = await getMessagesByThreadId(id);
+        loadedMessages.forEach(msg => messageIdsRef.current.add(msg.id));
         setMessages(loadedMessages);
       } catch (error) {
         console.error("[ChatScreen] Failed to load messages:", error);
@@ -61,8 +64,12 @@ export default function ChatScreen() {
           filter: `thread_id=eq.${id}`,
         },
         async (payload: any) => {
-          console.log("[ChatScreen] Realtime message received:", payload);
           const newMsg = payload.new;
+          
+          if (messageIdsRef.current.has(newMsg.id)) {
+            return;
+          }
+          
           const newMessage: Message = {
             id: newMsg.id,
             threadId: newMsg.thread_id,
@@ -71,43 +78,23 @@ export default function ChatScreen() {
             createdAt: new Date(newMsg.created_at),
           };
           
-          setMessages(prev => {
-            // Avoid duplicates by checking both id and text
-            const isDuplicate = prev.some(m => 
-              m.id === newMessage.id || 
-              (m.text === newMessage.text && m.senderId === newMessage.senderId && 
-               Math.abs(m.createdAt.getTime() - newMessage.createdAt.getTime()) < 1000)
-            );
-            
-            if (isDuplicate) {
-              console.log("[ChatScreen] Skipping duplicate message");
-              return prev;
-            }
-            
-            console.log("[ChatScreen] Adding new message to UI");
-            return [...prev, newMessage];
-          });
+          messageIdsRef.current.add(newMessage.id);
+          
+          setMessages(prev => [...prev, newMessage]);
 
-          // Scroll to bottom when new message arrives
           setTimeout(() => {
-            scrollViewRef.current?.scrollToEnd({ animated: true });
-          }, 100);
+            scrollViewRef.current?.scrollToEnd({ animated: false });
+          }, 50);
         }
       )
       .subscribe();
 
     return () => {
-      console.log("[ChatScreen] Unsubscribing from realtime");
       channel.unsubscribe();
     };
   }, [id, user]);
 
-  useEffect(() => {
-    // Scroll to bottom when messages change
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-  }, [messages.length]);
+
 
   if (!thread) {
     return (
@@ -131,18 +118,9 @@ export default function ChatScreen() {
     setIsSending(true);
 
     try {
-      console.log("[ChatScreen] Sending message:", text);
       await sendMessage(id || "", text, user.id);
-      
-      // Don't add optimistic message - let realtime subscription handle it
-      // This prevents duplicates
-      
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 100);
     } catch (error) {
       console.error("[ChatScreen] Failed to send message:", error);
-      // Revert input on error
       setInputText(text);
     } finally {
       setIsSending(false);

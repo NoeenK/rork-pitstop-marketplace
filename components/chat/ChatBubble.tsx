@@ -2,6 +2,7 @@ import { View, Text, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { Check, CheckCheck } from "lucide-react-native";
 import { Message } from "@/types";
+import { memo } from "react";
 
 interface ChatBubbleProps {
   message: Message;
@@ -11,7 +12,7 @@ interface ChatBubbleProps {
   displayName?: string;
 }
 
-export default function ChatBubble({ 
+const ChatBubble = memo(function ChatBubble({ 
   message, 
   isOwn, 
   showAvatar = false,
@@ -68,7 +69,9 @@ export default function ChatBubble({
       </View>
     </View>
   );
-}
+});
+
+export default ChatBubble;
 
 const styles = StyleSheet.create({
   container: {
