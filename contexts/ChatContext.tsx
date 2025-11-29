@@ -315,10 +315,6 @@ export const [ChatProvider, useChat] = createContextHook(() => {
   }, [threads]);
 
   const getMessagesByThreadId = useCallback(async (threadId: string) => {
-    if (messages[threadId]) {
-      return messages[threadId];
-    }
-
     console.log("[ChatContext] Loading messages for thread:", threadId);
     const { data, error } = await supabaseClient
       .from('messages')
@@ -352,7 +348,7 @@ export const [ChatProvider, useChat] = createContextHook(() => {
     }
 
     return [];
-  }, [messages]);
+  }, []);
 
   const sendMessage = useCallback(async (threadId: string, text: string, senderId: string) => {
     try {

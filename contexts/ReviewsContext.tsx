@@ -24,17 +24,9 @@ export const [ReviewsProvider, useReviews] = createContextHook(() => {
       try {
         setIsLoading(true);
         console.log("[ReviewsContext] Loading reviews from Supabase");
-        console.log("[ReviewsContext] Supabase URL:", process.env.EXPO_PUBLIC_SUPABASE_URL);
 
         if (!supabaseClient) {
           console.error("[ReviewsContext] Supabase client not initialized");
-          setReviews([]);
-          setIsLoading(false);
-          return;
-        }
-
-        if (!process.env.EXPO_PUBLIC_SUPABASE_URL || !process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY) {
-          console.error("[ReviewsContext] Supabase environment variables not configured");
           setReviews([]);
           setIsLoading(false);
           return;

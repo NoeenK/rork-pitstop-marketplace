@@ -44,17 +44,9 @@ export const [ListingsProvider, useListings] = createContextHook(() => {
       try {
         setIsLoading(true);
         console.log("[ListingsContext] Loading listings from Supabase");
-        console.log("[ListingsContext] Supabase URL:", process.env.EXPO_PUBLIC_SUPABASE_URL);
 
         if (!supabaseClient) {
           console.error("[ListingsContext] Supabase client not initialized");
-          setListings([]);
-          setIsLoading(false);
-          return;
-        }
-
-        if (!process.env.EXPO_PUBLIC_SUPABASE_URL || !process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY) {
-          console.error("[ListingsContext] Supabase environment variables not configured");
           setListings([]);
           setIsLoading(false);
           return;
