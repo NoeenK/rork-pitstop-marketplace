@@ -220,6 +220,8 @@ export const [ChatProvider, useChat] = createContextHook(() => {
       )
       .subscribe();
 
+    const lastLoadTime = { current: 0 };
+    
     const messageChannel = supabaseClient
       .channel(`user_messages_${user.id}`)
       .on(
@@ -230,13 +232,18 @@ export const [ChatProvider, useChat] = createContextHook(() => {
           table: 'messages',
         },
         async (payload) => {
-          console.log("[ChatContext] New message - updating thread list");
           const newMsg = payload.new as any;
+          console.log("[ChatContext] New message received for thread:", newMsg.thread_id);
           
           setThreads(prev => {
             const existingThreadIndex = prev.findIndex(t => t.id === newMsg.thread_id);
+            
             if (existingThreadIndex === -1) {
-              loadThreads();
+              const now = Date.now();
+              if (now - lastLoadTime.current > 2000) {
+                lastLoadTime.current = now;
+                setTimeout(() => loadThreads(), 500);
+              }
               return prev;
             }
             

@@ -29,6 +29,14 @@ export const [ReviewsProvider, useReviews] = createContextHook(() => {
         if (!supabaseClient) {
           console.error("[ReviewsContext] Supabase client not initialized");
           setReviews([]);
+          setIsLoading(false);
+          return;
+        }
+
+        if (!process.env.EXPO_PUBLIC_SUPABASE_URL || !process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY) {
+          console.error("[ReviewsContext] Supabase environment variables not configured");
+          setReviews([]);
+          setIsLoading(false);
           return;
         }
 
@@ -60,18 +68,13 @@ export const [ReviewsProvider, useReviews] = createContextHook(() => {
           console.log("[ReviewsContext] No reviews found (database is empty)");
         }
       } catch (error: any) {
-        console.error("[ReviewsContext] Fatal error:", error);
-        console.error("[ReviewsContext] Error type:", error?.constructor?.name);
-        console.error("[ReviewsContext] Error message:", error?.message);
-        
-        if (error?.message?.includes('fetch') || error?.message?.includes('network')) {
-          console.error("[ReviewsContext] Network/Fetch error - checking connection...");
-          console.error("  - Check if Supabase project is active");
-          console.error("  - Check internet connection");
-          console.error("  - On web: Check CORS settings");
-          console.error("  - Supabase URL:", process.env.EXPO_PUBLIC_SUPABASE_URL);
-        }
-        
+        console.error("[ReviewsContext] Error loading reviews:", {
+          message: error?.message || 'Unknown error',
+          details: error?.toString() || '',
+          hint: error?.hint || '',
+          code: error?.code || '',
+        });
+        console.error("[ReviewsContext] Error details:", error);
         setReviews([]);
       } finally {
         setIsLoading(false);

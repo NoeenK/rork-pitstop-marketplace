@@ -49,6 +49,14 @@ export const [ListingsProvider, useListings] = createContextHook(() => {
         if (!supabaseClient) {
           console.error("[ListingsContext] Supabase client not initialized");
           setListings([]);
+          setIsLoading(false);
+          return;
+        }
+
+        if (!process.env.EXPO_PUBLIC_SUPABASE_URL || !process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY) {
+          console.error("[ListingsContext] Supabase environment variables not configured");
+          setListings([]);
+          setIsLoading(false);
           return;
         }
 
@@ -81,18 +89,13 @@ export const [ListingsProvider, useListings] = createContextHook(() => {
           console.log("[ListingsContext] No listings found (database is empty)");
         }
       } catch (error: any) {
-        console.error("[ListingsContext] Fatal error:", error);
-        console.error("[ListingsContext] Error type:", error?.constructor?.name);
-        console.error("[ListingsContext] Error message:", error?.message);
-        
-        if (error?.message?.includes('fetch') || error?.message?.includes('network')) {
-          console.error("[ListingsContext] Network/Fetch error - checking connection...");
-          console.error("  - Check if Supabase project is active");
-          console.error("  - Check internet connection");
-          console.error("  - On web: Check CORS settings");
-          console.error("  - Supabase URL:", process.env.EXPO_PUBLIC_SUPABASE_URL);
-        }
-        
+        console.error("[ListingsContext] Error loading listings:", {
+          message: error?.message || 'Unknown error',
+          details: error?.toString() || '',
+          hint: error?.hint || '',
+          code: error?.code || '',
+        });
+        console.error("[ListingsContext] Error details:", error);
         setListings([]);
       } finally {
         setIsLoading(false);
