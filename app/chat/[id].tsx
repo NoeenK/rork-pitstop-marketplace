@@ -1,4 +1,4 @@
-import { View, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
+import { View, StyleSheet, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { useLocalSearchParams, Stack, useRouter } from "expo-router";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useChat } from "@/contexts/ChatContext";
@@ -144,16 +144,38 @@ export default function ChatScreen() {
   }
 
   const handleSend = async () => {
-    if (!inputText.trim() || !user || isSending) return;
+    if (!inputText.trim() || !user || isSending) {
+      return;
+    }
 
     const text = inputText.trim();
     setInputText("");
     setIsSending(true);
+    console.log("[ChatScreen] Sending message:", text);
 
     try {
-      await sendMessage(id || "", text, user.id);
+      const sentMessage = await sendMessage(id || "", text, user.id);
+
+      if (sentMessage) {
+        messageIdsRef.current.add(sentMessage.id);
+        setMessages(prev => {
+          if (prev.some(msg => msg.id === sentMessage.id)) {
+            console.log("[ChatScreen] Message already exists locally:", sentMessage.id);
+            return prev;
+          }
+
+          const updatedMessages = [...prev, sentMessage];
+
+          setTimeout(() => {
+            scrollViewRef.current?.scrollToEnd({ animated: true });
+          }, 60);
+
+          return updatedMessages;
+        });
+      }
     } catch (error) {
       console.error("[ChatScreen] Failed to send message:", error);
+      Alert.alert("Message not sent", "We couldn't send your message. Please try again.");
       setInputText(text);
     } finally {
       setIsSending(false);

@@ -31,7 +31,10 @@ export default function MessageInput({
   };
 
   return (
-    <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+    <View
+      style={[styles.container, { paddingBottom: Math.max(insets.bottom, 8) }]}
+      testID="message-input-container"
+    >
       <View style={styles.inputRow}>
         <TouchableOpacity
           style={styles.iconButton}
@@ -55,6 +58,7 @@ export default function MessageInput({
           onSubmitEditing={handleSend}
           returnKeyType="send"
           editable={!disabled}
+          testID="chat-message-input"
         />
 
         {hasText ? (
@@ -62,6 +66,7 @@ export default function MessageInput({
             style={styles.sendButton}
             onPress={handleSend}
             disabled={disabled}
+            testID="chat-send-button"
           >
             <Send size={20} color="#FFFFFF" />
           </TouchableOpacity>
