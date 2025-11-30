@@ -360,12 +360,19 @@ export const [ChatProvider, useChat] = createContextHook(() => {
 
     try {
       setIsLoading(true);
+      const apiUrl = process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
+      
       console.log("[ChatContext] Sending message to thread via backend:", { 
         threadId, 
         senderId, 
         textLength: normalizedText.length,
-        apiUrl: process.env.EXPO_PUBLIC_RORK_API_BASE_URL 
+        apiUrl,
+        fullUrl: `${apiUrl}/api/trpc/chat.sendMessage`,
       });
+
+      if (!apiUrl) {
+        throw new Error("Backend API URL is not configured. Check EXPO_PUBLIC_RORK_API_BASE_URL in your .env file.");
+      }
 
       const response = await trpcClient.chat.sendMessage.mutate({
         threadId,
@@ -393,11 +400,25 @@ export const [ChatProvider, useChat] = createContextHook(() => {
       console.error("[ChatContext] Error message:", error?.message);
       console.error("[ChatContext] Error cause:", error?.cause);
       console.error("[ChatContext] Error data:", error?.data);
+      console.error("[ChatContext] Full error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+      
       if (error instanceof Error) {
         console.error("[ChatContext] Error stack:", error.stack);
       }
-      console.error("[ChatContext] =============================" );
-      throw new Error(error?.message || "Failed to send message. Please try again.");
+      
+      console.error("[ChatContext] =============================");
+      
+      let errorMessage = "Failed to send message. Please try again.";
+      
+      if (error?.message?.toLowerCase().includes('json')) {
+        errorMessage = "Backend server error. The server returned invalid data. Make sure the backend server is running properly.";
+      } else if (error?.message?.toLowerCase().includes('fetch') || error?.message?.toLowerCase().includes('network')) {
+        errorMessage = "Cannot connect to the backend server. Please make sure the server is running at " + process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -613,13 +634,11 @@ export const [ChatProvider, useChat] = createContextHook(() => {
     try {
       console.log("[ChatContext] Marking thread as read:", threadId);
 
-      // Call the Supabase function to mark messages as read
       await supabaseClient.rpc('mark_messages_as_read', {
         p_thread_id: threadId,
         p_user_id: user.id,
       });
 
-      // Update local state to mark messages as read
       setMessages(prev => {
         const threadMessages = prev[threadId] || [];
         const updatedMessages = threadMessages.map(msg =>
@@ -630,7 +649,6 @@ export const [ChatProvider, useChat] = createContextHook(() => {
         return { ...prev, [threadId]: updatedMessages };
       });
 
-      // Update thread unread count
       await supabaseClient
         .from('chat_threads')
         .update({ unread_count: 0 })
