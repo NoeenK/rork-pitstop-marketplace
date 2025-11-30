@@ -3,6 +3,7 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { Platform } from "react-native";
 import { ChatThread, Message, Offer } from "@/types";
 import { supabaseClient } from "@/lib/supabase";
+import { trpcClient } from "@/lib/trpc";
 import { useAuth } from "./AuthContext";
 
 export const [ChatProvider, useChat] = createContextHook(() => {
@@ -351,41 +352,35 @@ export const [ChatProvider, useChat] = createContextHook(() => {
   }, []);
 
   const sendMessage = useCallback(async (threadId: string, text: string, senderId: string) => {
+    const normalizedText = text.trim();
+
+    if (!normalizedText) {
+      throw new Error("Message cannot be empty");
+    }
+
     try {
       setIsLoading(true);
-      console.log("[ChatContext] Sending message to thread:", threadId);
+      console.log("[ChatContext] Sending message to thread via backend:", threadId);
 
-      const { data, error } = await supabaseClient
-        .from('messages')
-        .insert({
-          thread_id: threadId,
-          sender_id: senderId,
-          text,
-          created_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error("[ChatContext] Error sending message:", error);
-        throw error;
-      }
+      const response = await trpcClient.chat.sendMessage.mutate({
+        threadId,
+        senderId,
+        text: normalizedText,
+      });
 
       const newMessage: Message = {
-        id: data.id,
-        threadId: data.thread_id,
-        senderId: data.sender_id,
-        text: data.text,
-        createdAt: new Date(data.created_at),
-        readAt: undefined,
+        id: response.id,
+        threadId: response.threadId,
+        senderId: response.senderId,
+        text: response.text,
+        createdAt: new Date(response.createdAt),
+        readAt: response.readAt ? new Date(response.readAt) : undefined,
       };
 
-      // Don't update local state here - let the realtime subscription handle it
-      // This prevents duplicates
-      console.log("[ChatContext] Message sent:", newMessage.id);
+      console.log("[ChatContext] Message sent via backend:", newMessage.id);
       return newMessage;
     } catch (error) {
-      console.error("[ChatContext] Failed to send message:", error);
+      console.error("[ChatContext] Failed to send message via backend:", error);
       throw error;
     } finally {
       setIsLoading(false);
