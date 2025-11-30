@@ -360,13 +360,15 @@ export const [ChatProvider, useChat] = createContextHook(() => {
 
     try {
       setIsLoading(true);
-      console.log("[ChatContext] Sending message to thread via backend:", threadId);
+      console.log("[ChatContext] Sending message to thread via backend:", { threadId, senderId, textLength: normalizedText.length });
 
       const response = await trpcClient.chat.sendMessage.mutate({
         threadId,
         senderId,
         text: normalizedText,
       });
+
+      console.log("[ChatContext] Received response from backend:", response);
 
       const newMessage: Message = {
         id: response.id,
@@ -381,6 +383,11 @@ export const [ChatProvider, useChat] = createContextHook(() => {
       return newMessage;
     } catch (error) {
       console.error("[ChatContext] Failed to send message via backend:", error);
+      console.error("[ChatContext] Error details:", JSON.stringify(error, null, 2));
+      if (error instanceof Error) {
+        console.error("[ChatContext] Error message:", error.message);
+        console.error("[ChatContext] Error stack:", error.stack);
+      }
       throw error;
     } finally {
       setIsLoading(false);
