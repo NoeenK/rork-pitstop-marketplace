@@ -360,7 +360,12 @@ export const [ChatProvider, useChat] = createContextHook(() => {
 
     try {
       setIsLoading(true);
-      console.log("[ChatContext] Sending message to thread via backend:", { threadId, senderId, textLength: normalizedText.length });
+      console.log("[ChatContext] Sending message to thread via backend:", { 
+        threadId, 
+        senderId, 
+        textLength: normalizedText.length,
+        apiUrl: process.env.EXPO_PUBLIC_RORK_API_BASE_URL 
+      });
 
       const response = await trpcClient.chat.sendMessage.mutate({
         threadId,
@@ -379,16 +384,20 @@ export const [ChatProvider, useChat] = createContextHook(() => {
         readAt: response.readAt ? new Date(response.readAt) : undefined,
       };
 
-      console.log("[ChatContext] Message sent via backend:", newMessage.id);
+      console.log("[ChatContext] Message sent successfully:", newMessage.id);
       return newMessage;
-    } catch (error) {
-      console.error("[ChatContext] Failed to send message via backend:", error);
-      console.error("[ChatContext] Error details:", JSON.stringify(error, null, 2));
+    } catch (error: any) {
+      console.error("[ChatContext] ===== ERROR SENDING MESSAGE =====");
+      console.error("[ChatContext] Error:", error);
+      console.error("[ChatContext] Error name:", error?.name);
+      console.error("[ChatContext] Error message:", error?.message);
+      console.error("[ChatContext] Error cause:", error?.cause);
+      console.error("[ChatContext] Error data:", error?.data);
       if (error instanceof Error) {
-        console.error("[ChatContext] Error message:", error.message);
         console.error("[ChatContext] Error stack:", error.stack);
       }
-      throw error;
+      console.error("[ChatContext] =============================" );
+      throw new Error(error?.message || "Failed to send message. Please try again.");
     } finally {
       setIsLoading(false);
     }
