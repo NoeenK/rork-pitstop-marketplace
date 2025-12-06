@@ -94,6 +94,7 @@ export default function ChatScreen() {
             threadId: newMsg.thread_id,
             senderId: newMsg.sender_id,
             text: newMsg.text,
+            imageUrl: newMsg.image_url || undefined,
             createdAt: new Date(newMsg.created_at),
           };
           
@@ -182,6 +183,42 @@ export default function ChatScreen() {
     }
   };
 
+  const handleSendImage = async (imageUrl: string) => {
+    if (!user || isSending) {
+      return;
+    }
+
+    setIsSending(true);
+    console.log("[ChatScreen] Sending image:", imageUrl);
+
+    try {
+      const sentMessage = await sendMessage(id || "", "", user.id, imageUrl);
+
+      if (sentMessage) {
+        messageIdsRef.current.add(sentMessage.id);
+        setMessages(prev => {
+          if (prev.some(msg => msg.id === sentMessage.id)) {
+            console.log("[ChatScreen] Message already exists locally:", sentMessage.id);
+            return prev;
+          }
+
+          const updatedMessages = [...prev, sentMessage];
+
+          setTimeout(() => {
+            scrollViewRef.current?.scrollToEnd({ animated: true });
+          }, 60);
+
+          return updatedMessages;
+        });
+      }
+    } catch (error) {
+      console.error("[ChatScreen] Failed to send image:", error);
+      Alert.alert("Image not sent", "We couldn't send your image. Please try again.");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   const otherUserId = thread?.buyerId === user?.id ? thread?.sellerId : thread?.buyerId;
   const userOnline = otherUserId ? isUserOnline(otherUserId) : false;
 
@@ -226,10 +263,11 @@ export default function ChatScreen() {
       />
 
       <MessageInput
-            value={inputText}
-            onChangeText={setInputText}
+        value={inputText}
+        onChangeText={setInputText}
         onSend={handleSend}
-            placeholder="Enter Text"
+        onSendImage={handleSendImage}
+        placeholder="Enter Text"
         disabled={isSending}
       />
     </KeyboardAvoidingView>

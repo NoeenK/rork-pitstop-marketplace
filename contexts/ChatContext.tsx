@@ -333,6 +333,7 @@ export const [ChatProvider, useChat] = createContextHook(() => {
         threadId: msg.thread_id,
         senderId: msg.sender_id,
         text: msg.text,
+        imageUrl: msg.image_url || undefined,
         createdAt: new Date(msg.created_at),
         readAt: msg.read_at ? new Date(msg.read_at) : undefined,
       }));
@@ -350,11 +351,11 @@ export const [ChatProvider, useChat] = createContextHook(() => {
     return [];
   }, []);
 
-  const sendMessage = useCallback(async (threadId: string, text: string, senderId: string) => {
+  const sendMessage = useCallback(async (threadId: string, text: string, senderId: string, imageUrl?: string) => {
     const normalizedText = text.trim();
 
-    if (!normalizedText) {
-      throw new Error("Message cannot be empty");
+    if (!normalizedText && !imageUrl) {
+      throw new Error("Message must have text or an image");
     }
 
     setIsLoading(true);
@@ -364,6 +365,7 @@ export const [ChatProvider, useChat] = createContextHook(() => {
         threadId, 
         senderId, 
         textLength: normalizedText.length,
+        hasImage: !!imageUrl,
       });
 
       const thread = threads.find(t => t.id === threadId);
@@ -396,10 +398,11 @@ export const [ChatProvider, useChat] = createContextHook(() => {
           thread_id: threadId,
           sender_id: senderId,
           user_id: sessionData.session.user.id, // Required: references auth.users(id)
-          text: normalizedText,
+          text: normalizedText || '', // Allow empty text if image is provided
+          image_url: imageUrl || null,
           created_at: new Date().toISOString(),
         })
-        .select('id, thread_id, sender_id, text, created_at, read_at')
+        .select('id, thread_id, sender_id, text, image_url, created_at, read_at')
         .single();
 
       if (insertError) {
@@ -446,6 +449,7 @@ export const [ChatProvider, useChat] = createContextHook(() => {
         threadId: message.thread_id,
         senderId: message.sender_id,
         text: message.text,
+        imageUrl: message.image_url || undefined,
         createdAt: new Date(message.created_at),
         readAt: message.read_at ? new Date(message.read_at) : undefined,
       };

@@ -3,17 +3,24 @@ import { Stack } from "expo-router";
 import { MapPin, Save, Navigation } from "lucide-react-native";
 import { useLocation } from "@/contexts/LocationContext";
 import { useState, useEffect } from "react";
+import GoogleMapView from "@/components/GoogleMapView";
 
 export default function ManageNeighbourhoodScreen() {
-  const { city: currentCity, country: currentCountry, refreshLocation } = useLocation();
+  const { city: currentCity, country: currentCountry, latitude, longitude, refreshLocation } = useLocation();
   const [city, setCity] = useState("");
   const [country, setCountry] = useState("");
   const [searchRadius, setSearchRadius] = useState("50");
+  const [showMap, setShowMap] = useState(false);
 
   useEffect(() => {
     setCity(currentCity);
     setCountry(currentCountry);
   }, [currentCity, currentCountry]);
+
+  const handleUseCurrentLocation = () => {
+    refreshLocation();
+    setShowMap(true);
+  };
 
   const handleSave = () => {
     console.log("Saving location:", { city, country, searchRadius });
@@ -76,10 +83,22 @@ export default function ManageNeighbourhoodScreen() {
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.gpsButton}>
+        <TouchableOpacity style={styles.gpsButton} onPress={handleUseCurrentLocation}>
           <Navigation size={20} color="#FFFFFF" />
           <Text style={styles.gpsButtonText}>Use Current Location</Text>
         </TouchableOpacity>
+
+        {showMap && latitude && longitude && (
+          <View style={styles.mapContainer}>
+            <Text style={styles.mapLabel}>Your Current Location</Text>
+            <GoogleMapView
+              latitude={latitude}
+              longitude={longitude}
+              showUserLocation={true}
+              style={styles.map}
+            />
+          </View>
+        )}
 
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
           <Save size={20} color="#FFFFFF" />
@@ -196,5 +215,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666666",
     lineHeight: 22,
+  },
+  mapContainer: {
+    marginBottom: 24,
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "#1C1C1E",
+    padding: 16,
+  },
+  mapLabel: {
+    fontSize: 16,
+    fontWeight: "600" as const,
+    color: "#FFFFFF",
+    marginBottom: 12,
+  },
+  map: {
+    height: 300,
+    borderRadius: 12,
   },
 });

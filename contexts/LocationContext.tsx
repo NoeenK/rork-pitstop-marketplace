@@ -1,5 +1,5 @@
 import createContextHook from "@nkzw/create-context-hook";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import * as Location from "expo-location";
 import { Platform, Alert } from "react-native";
 
@@ -11,6 +11,7 @@ export const [LocationProvider, useLocation] = createContextHook(() => {
   const [hasRequestedPermissions, setHasRequestedPermissions] = useState<boolean>(false);
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
+  const watchSubscriptionRef = useRef<Location.LocationSubscription | null>(null);
 
   const fetchLocation = async () => {
     try {
@@ -172,8 +173,77 @@ export const [LocationProvider, useLocation] = createContextHook(() => {
     await fetchLocation();
   }, []);
 
+  // Real-time location tracking
+  const startLocationTracking = useCallback(async () => {
+    try {
+      const { status } = await Location.getForegroundPermissionsAsync();
+      
+      if (status !== "granted") {
+        console.log("[LocationContext] Location permission not granted for tracking");
+        return;
+      }
+
+      // Stop any existing watch
+      if (watchSubscriptionRef.current) {
+        watchSubscriptionRef.current.remove();
+        watchSubscriptionRef.current = null;
+      }
+
+      // Start watching location with high accuracy
+      watchSubscriptionRef.current = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          timeInterval: 5000, // Update every 5 seconds
+          distanceInterval: 10, // Update every 10 meters
+        },
+        async (location) => {
+          const { latitude, longitude } = location.coords;
+          console.log("[LocationContext] Real-time location update:", latitude, longitude);
+          
+          setLatitude(latitude);
+          setLongitude(longitude);
+
+          // Reverse geocode to get city/country
+          try {
+            const [result] = await Location.reverseGeocodeAsync({
+              latitude,
+              longitude,
+            });
+
+            if (result) {
+              setCity(result.city || result.subregion || "Unknown");
+              setCountry(result.isoCountryCode || "");
+              console.log("[LocationContext] Updated location:", result.city, result.isoCountryCode);
+            }
+          } catch (geocodeError) {
+            console.log("[LocationContext] Geocoding error:", geocodeError);
+          }
+        }
+      );
+
+      console.log("[LocationContext] Started real-time location tracking");
+    } catch (err) {
+      console.log("[LocationContext] Error starting location tracking:", err);
+    }
+  }, []);
+
+  const stopLocationTracking = useCallback(() => {
+    if (watchSubscriptionRef.current) {
+      watchSubscriptionRef.current.remove();
+      watchSubscriptionRef.current = null;
+      console.log("[LocationContext] Stopped real-time location tracking");
+    }
+  }, []);
+
   useEffect(() => {
-    fetchLocation();
+    fetchLocation().then(() => {
+      // Start real-time tracking after initial location is fetched
+      startLocationTracking();
+    });
+
+    return () => {
+      stopLocationTracking();
+    };
   }, []);
 
   return useMemo(() => ({
@@ -187,5 +257,7 @@ export const [LocationProvider, useLocation] = createContextHook(() => {
     refreshLocation,
     requestAllPermissions,
     hasRequestedPermissions,
-  }), [city, country, latitude, longitude, loading, error, requestPermission, refreshLocation, requestAllPermissions, hasRequestedPermissions]);
+    startLocationTracking,
+    stopLocationTracking,
+  }), [city, country, latitude, longitude, loading, error, requestPermission, refreshLocation, requestAllPermissions, hasRequestedPermissions, startLocationTracking, stopLocationTracking]);
 });

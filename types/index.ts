@@ -71,6 +71,7 @@ export interface Message {
   senderId: string;
   sender?: User;
   text: string;
+  imageUrl?: string;
   offerId?: string;
   createdAt: Date;
   readAt?: Date;

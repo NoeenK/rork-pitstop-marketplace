@@ -79,6 +79,12 @@
         }
       ],
       [
+        "react-native-maps",
+        {
+          "googleMapsApiKey": "AIzaSyDfyzkoduMBgz3QNVYshaTGnPFz2gSgezo"
+        }
+      ],
+      [
         "expo-notifications",
         {
           "icon": "./local/assets/notification_icon.png",

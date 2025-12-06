@@ -51,9 +51,18 @@ const ChatBubble = memo(function ChatBubble({
         </View>
       )}
       <View style={[styles.bubble, isOwn ? styles.bubbleOwn : styles.bubbleOther]}>
-        <Text style={[styles.text, isOwn && styles.textOwn]}>
-          {message.text}
-        </Text>
+        {message.imageUrl && (
+          <Image
+            source={{ uri: message.imageUrl }}
+            style={styles.messageImage}
+            contentFit="cover"
+          />
+        )}
+        {message.text ? (
+          <Text style={[styles.text, isOwn && styles.textOwn]}>
+            {message.text}
+          </Text>
+        ) : null}
         <View style={[styles.metaContainer, isOwn && styles.metaContainerOwn]}>
           <Text style={styles.timeText}>{formatTime(message.createdAt)}</Text>
           {isOwn && (
@@ -159,6 +168,13 @@ const styles = StyleSheet.create({
   },
   readReceiptContainer: {
     marginLeft: 4,
+  },
+  messageImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: "rgba(0, 0, 0, 0.1)",
   },
 });
 
