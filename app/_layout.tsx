@@ -2,7 +2,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useState } from "react";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ListingsProvider } from "@/contexts/ListingsContext";
 import { ChatProvider } from "@/contexts/ChatContext";
@@ -16,6 +15,7 @@ import { SearchAlertsProvider } from "@/contexts/SearchAlertsContext";
 import { FeedPreferencesProvider } from "@/contexts/FeedPreferencesContext";
 import { RewardsProvider } from "@/contexts/RewardsContext";
 import { InquiryProvider } from "@/contexts/InquiryContext";
+import { trpc, getTrpcClient } from "@/lib/trpc";
 
 
 SplashScreen.preventAutoHideAsync();
@@ -209,9 +209,7 @@ function ThemedAppContent() {
                       <ListingsProvider>
                         <ChatProvider>
                           <ActivityProvider>
-                            <GestureHandlerRootView>
-                              <RootLayoutNav />
-                            </GestureHandlerRootView>
+                            <RootLayoutNav />
                           </ActivityProvider>
                         </ChatProvider>
                       </ListingsProvider>
@@ -229,16 +227,19 @@ function ThemedAppContent() {
 
 export default function RootLayout() {
   const [queryClient] = useState(() => new QueryClient());
+  const [trpcClient] = useState(() => getTrpcClient());
 
   useEffect(() => {
     SplashScreen.hideAsync();
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <ThemedAppContent />
-      </ThemeProvider>
-    </QueryClientProvider>
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <ThemedAppContent />
+        </ThemeProvider>
+      </QueryClientProvider>
+    </trpc.Provider>
   );
 }

@@ -57,7 +57,7 @@ export default function FiltersScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [fadeAnim, slideAnim]);
 
   const vendors = [
     "WCP",

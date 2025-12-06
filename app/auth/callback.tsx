@@ -2,16 +2,14 @@ import { useEffect, useState, useCallback } from "react";
 import { ActivityIndicator, StyleSheet, Text, View, TouchableOpacity, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { useAuth } from "@/contexts/AuthContext";
 import { Colors } from "@/constants/colors";
 import { supabaseClient } from "@/lib/supabase";
 
 export default function AuthCallbackScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const authContext = useAuth();
   const [error, setError] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(true);
+  const [isProcessing, setIsProcessing] = useState<boolean>(true);
 
   const handleRetry = useCallback(() => {
     router.replace("/onboarding/login");
@@ -114,7 +112,7 @@ export default function AuthCallbackScreen() {
         clearTimeout(timeoutId);
       }
     };
-  }, [router, params]);
+  }, [router, params, isProcessing]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
