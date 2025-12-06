@@ -2,7 +2,7 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from "react-nati
 import { useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
-import { ShieldCheck, Receipt, Grid3x3, ShoppingBag, Heart, Clock, ScanLine, Tag, Sliders, Crosshair, MapPin, BookOpen, UserPlus, Gift, Headphones, FileText, Settings, ChevronRight } from "lucide-react-native";
+import { ShieldCheck, Receipt, Grid3x3, ShoppingBag, Clock, ScanLine, Tag, Sliders, Crosshair, MapPin, BookOpen, UserPlus, Gift, Headphones, FileText, Settings, ChevronRight } from "lucide-react-native";
 import { Image } from "expo-image";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -139,17 +139,6 @@ export default function ProfileScreen() {
             >
               <ShoppingBag size={24} color={colors.text} />
               <Text style={styles.menuText}>Purchases</Text>
-              <ChevronRight size={24} color={colors.textSecondary} style={styles.chevron} />
-            </TouchableOpacity>
-
-            <View style={styles.menuDivider} />
-
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={() => router.push('/saved')}
-            >
-              <Heart size={24} color={colors.text} />
-              <Text style={styles.menuText}>Favourites</Text>
               <ChevronRight size={24} color={colors.textSecondary} style={styles.chevron} />
             </TouchableOpacity>
 

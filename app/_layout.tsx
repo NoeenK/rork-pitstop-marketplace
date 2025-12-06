@@ -15,7 +15,7 @@ import { SearchAlertsProvider } from "@/contexts/SearchAlertsContext";
 import { FeedPreferencesProvider } from "@/contexts/FeedPreferencesContext";
 import { RewardsProvider } from "@/contexts/RewardsContext";
 import { InquiryProvider } from "@/contexts/InquiryContext";
-import { trpc, getTrpcClient } from "@/lib/trpc";
+
 
 
 SplashScreen.preventAutoHideAsync();
@@ -227,19 +227,16 @@ function ThemedAppContent() {
 
 export default function RootLayout() {
   const [queryClient] = useState(() => new QueryClient());
-  const [trpcClient] = useState(() => getTrpcClient());
 
   useEffect(() => {
     SplashScreen.hideAsync();
   }, []);
 
   return (
-    <trpc.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <ThemedAppContent />
-        </ThemeProvider>
-      </QueryClientProvider>
-    </trpc.Provider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <ThemedAppContent />
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
