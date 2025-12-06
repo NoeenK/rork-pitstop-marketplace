@@ -16,7 +16,7 @@ import { SearchAlertsProvider } from "@/contexts/SearchAlertsContext";
 import { FeedPreferencesProvider } from "@/contexts/FeedPreferencesContext";
 import { RewardsProvider } from "@/contexts/RewardsContext";
 import { InquiryProvider } from "@/contexts/InquiryContext";
-// import { trpc, getTrpcClient } from "@/lib/trpc";
+
 
 SplashScreen.preventAutoHideAsync();
 
