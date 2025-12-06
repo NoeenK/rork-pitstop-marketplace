@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ListingsProvider } from "@/contexts/ListingsContext";
@@ -16,11 +16,9 @@ import { SearchAlertsProvider } from "@/contexts/SearchAlertsContext";
 import { FeedPreferencesProvider } from "@/contexts/FeedPreferencesContext";
 import { RewardsProvider } from "@/contexts/RewardsContext";
 import { InquiryProvider } from "@/contexts/InquiryContext";
-import { trpc, trpcClient } from "@/lib/trpc";
+// import { trpc, getTrpcClient } from "@/lib/trpc";
 
 SplashScreen.preventAutoHideAsync();
-
-const queryClient = new QueryClient();
 
 function RootLayoutNav() {
   const { colors } = useTheme();
@@ -230,17 +228,17 @@ function ThemedAppContent() {
 }
 
 export default function RootLayout() {
+  const [queryClient] = useState(() => new QueryClient());
+
   useEffect(() => {
     SplashScreen.hideAsync();
   }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <trpc.Provider client={trpcClient} queryClient={queryClient}>
-        <ThemeProvider>
-          <ThemedAppContent />
-        </ThemeProvider>
-      </trpc.Provider>
+      <ThemeProvider>
+        <ThemedAppContent />
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
