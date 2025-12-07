@@ -8,20 +8,30 @@ const config = getDefaultConfig(__dirname);
 // Set project root explicitly
 const projectRoot = __dirname;
 
-// Ignore nested directories that cause ENOENT errors
+// Configure Metro to only watch the current project root
 config.projectRoot = projectRoot;
 config.watchFolders = [projectRoot];
 
-// Block nested duplicate directories from being watched
-const nestedDirs = [
-  path.join(projectRoot, 'rork-pitstop-marketplace-main'),
-  path.join(projectRoot, 'rork-pitstop-marketplace', 'rork-pitstop-marketplace-main'),
+// Create blocklist patterns for nested directories
+const nestedPatterns = [
+  /rork-pitstop-marketplace-main[\/\\]rork-pitstop-marketplace-main/,
+  /rork-pitstop-marketplace[\/\\]rork-pitstop-marketplace-main/,
+  /rork-pitstop-marketplace[\/\\]rork-pitstop-marketplace/,
 ];
 
 config.resolver = {
   ...config.resolver,
-  blockList: nestedDirs.map(dir => new RegExp(dir.replace(/\\/g, '\\\\') + '.*')),
+  blockList: nestedPatterns,
   sourceExts: [...(config.resolver?.sourceExts || []), 'tsx', 'ts', 'jsx', 'js'],
+};
+
+// Configure watcher to ignore nested directories
+config.watcher = {
+  ...config.watcher,
+  additionalExts: config.resolver.sourceExts,
+  healthCheck: {
+    enabled: true,
+  },
 };
 
 module.exports = config;

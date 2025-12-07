@@ -38,3 +38,5 @@ yarn-error.*
 
 # Duplicate folder - should not be checked
 rork-pitstop-marketplace-main/
+
+rork-pitstop-marketplace/
