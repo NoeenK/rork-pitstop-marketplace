@@ -32,7 +32,7 @@ export default function GoogleMapView({
   }, [latitude, longitude]);
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, style]} pointerEvents="box-none">
       <MapView
         ref={mapRef}
         provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
@@ -45,10 +45,23 @@ export default function GoogleMapView({
         }}
         showsUserLocation={showUserLocation}
         showsMyLocationButton={true}
-        followsUserLocation={true}
+        followsUserLocation={false}
+        scrollEnabled={true}
+        zoomEnabled={true}
+        pitchEnabled={true}
+        rotateEnabled={true}
         onRegionChangeComplete={(region) => {
           if (onLocationChange) {
             onLocationChange(region.latitude, region.longitude);
+          }
+        }}
+        onPress={(e) => {
+          // Allow map to be clicked/interacted with
+          if (onLocationChange && e.nativeEvent.coordinate) {
+            onLocationChange(
+              e.nativeEvent.coordinate.latitude,
+              e.nativeEvent.coordinate.longitude
+            );
           }
         }}
         mapType="standard"
@@ -57,6 +70,15 @@ export default function GoogleMapView({
           coordinate={{ latitude, longitude }}
           title="Your Location"
           description="Current location"
+          draggable={true}
+          onDragEnd={(e) => {
+            if (onLocationChange) {
+              onLocationChange(
+                e.nativeEvent.coordinate.latitude,
+                e.nativeEvent.coordinate.longitude
+              );
+            }
+          }}
         />
       </MapView>
     </View>

@@ -15,6 +15,8 @@ import { SearchAlertsProvider } from "@/contexts/SearchAlertsContext";
 import { FeedPreferencesProvider } from "@/contexts/FeedPreferencesContext";
 import { RewardsProvider } from "@/contexts/RewardsContext";
 import { InquiryProvider } from "@/contexts/InquiryContext";
+import { trpc, getTrpcClient } from "@/lib/trpc";
+import { httpBatchLink } from "@trpc/react-query";
 
 
 
@@ -227,16 +229,33 @@ function ThemedAppContent() {
 
 export default function RootLayout() {
   const [queryClient] = useState(() => new QueryClient());
+  const [trpcClient] = useState(() => {
+    try {
+      return getTrpcClient();
+    } catch (error) {
+      console.error('[RootLayout] Error creating tRPC client:', error);
+      // Return a minimal client to prevent app crash
+      return trpc.createClient({
+        links: [
+          httpBatchLink({
+            url: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
+          }),
+        ],
+      });
+    }
+  });
 
   useEffect(() => {
     SplashScreen.hideAsync();
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <ThemedAppContent />
-      </ThemeProvider>
-    </QueryClientProvider>
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <ThemedAppContent />
+        </ThemeProvider>
+      </QueryClientProvider>
+    </trpc.Provider>
   );
 }

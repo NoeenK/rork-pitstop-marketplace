@@ -9,9 +9,14 @@ const getBaseUrl = () => {
     return process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
   }
 
-  throw new Error(
-    "No base url found, please set EXPO_PUBLIC_RORK_API_BASE_URL"
-  );
+  // Fallback for development - use localhost if no URL is set
+  if (typeof window !== 'undefined') {
+    // Web: use current origin
+    return window.location.origin;
+  }
+  
+  // Native: use localhost
+  return 'http://localhost:3000';
 };
 
 export function getTrpcClient() {

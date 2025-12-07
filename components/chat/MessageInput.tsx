@@ -93,12 +93,24 @@ export default function MessageInput({
 
       const fileExt = selectedImage.split('.').pop()?.toLowerCase() || 'jpg';
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `chat-images/${fileName}`;
+      // File path should NOT include the bucket name - just the path within the bucket
+      const filePath = fileName;
 
-      const response = await fetch(selectedImage);
-      const fileData = await response.arrayBuffer();
+      // Convert image URI to blob/file for upload
+      let fileData: Blob | ArrayBuffer;
+      
+      if (Platform.OS === 'web') {
+        // Web: fetch as blob
+        const response = await fetch(selectedImage);
+        fileData = await response.blob();
+      } else {
+        // Native: fetch as arrayBuffer
+        const response = await fetch(selectedImage);
+        fileData = await response.arrayBuffer();
+      }
 
-      const { error: uploadError } = await supabaseClient.storage
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabaseClient.storage
         .from('chat-images')
         .upload(filePath, fileData, {
           contentType: `image/${fileExt}`,
@@ -110,16 +122,20 @@ export default function MessageInput({
         throw uploadError;
       }
 
+      // Get public URL for the uploaded image
       const { data: { publicUrl } } = supabaseClient.storage
         .from('chat-images')
         .getPublicUrl(filePath);
 
-      console.log("[MessageInput] Image uploaded:", publicUrl);
+      console.log("[MessageInput] Image uploaded successfully:", publicUrl);
       onSendImage(publicUrl);
       setSelectedImage(null);
     } catch (error: any) {
       console.error("[MessageInput] Upload failed:", error);
-      Alert.alert("Error", error?.message || "Failed to upload image. Please try again.");
+      Alert.alert(
+        "Upload Error", 
+        error?.message || "Failed to upload image. Please check your connection and try again."
+      );
     } finally {
       setIsUploading(false);
     }

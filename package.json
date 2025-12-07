@@ -3,13 +3,13 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start --no-dev-client --offline",
+    "start": "node start-expo.js",
     "start-web": "expo start --web",
     "start-web-dev": "set DEBUG=expo* && expo start --web",
     "start-android": "expo start --android",
     "start-ios": "expo start --ios",
     "lint": "expo lint",
-    "dev": "expo start --no-dev-client --offline",
+    "dev": "node start-expo.js",
     "web": "expo start --web",
     "clear": "expo start --clear"
   },

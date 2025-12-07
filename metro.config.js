@@ -19,10 +19,34 @@ const nestedPatterns = [
   /rork-pitstop-marketplace[\/\\]rork-pitstop-marketplace/,
 ];
 
+// Custom resolver to handle platform-specific modules
+const defaultResolver = config.resolver || {};
+
 config.resolver = {
-  ...config.resolver,
+  ...defaultResolver,
   blockList: nestedPatterns,
-  sourceExts: [...(config.resolver?.sourceExts || []), 'tsx', 'ts', 'jsx', 'js'],
+  sourceExts: [...(defaultResolver.sourceExts || []), 'tsx', 'ts', 'jsx', 'js', 'web.tsx', 'web.ts'],
+  // Custom resolver to handle react-native-maps on web
+  resolveRequest: (context, moduleName, platform) => {
+    // Block react-native-maps on web completely - return empty module
+    if (platform === 'web' && moduleName === 'react-native-maps') {
+      const emptyModulePath = path.join(__dirname, 'lib', 'empty-module-stub.js');
+      return {
+        type: 'sourceFile',
+        filePath: emptyModulePath,
+      };
+    }
+    
+    // Use default resolution for everything else
+    // Call the default resolver if it exists
+    const defaultResolve = defaultResolver.resolveRequest || context.resolveRequest;
+    if (defaultResolve) {
+      return defaultResolve(context, moduleName, platform);
+    }
+    
+    // Final fallback
+    throw new Error(`Cannot resolve module ${moduleName}`);
+  },
 };
 
 // Configure watcher to ignore nested directories
