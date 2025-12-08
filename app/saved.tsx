@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import ListingCard from "@/components/ListingCard";
 import EmptyState from "@/components/EmptyState";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function SavedListingsScreen() {
   const { user } = useAuth();
@@ -15,6 +16,7 @@ export default function SavedListingsScreen() {
   const { allListings } = useListings();
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const savedListingIds = getUserSavedListingIds();
   const savedListings = allListings.filter((listing) => 
@@ -47,6 +49,14 @@ export default function SavedListingsScreen() {
           headerShown: false,
         }}
       />
+      
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <View style={styles.headerTop}>
+          <Text style={styles.headerTitle}>Wishlist</Text>
+        </View>
+      </View>
+
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
@@ -80,8 +90,25 @@ export default function SavedListingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#FFFFFF",
   },
-
+  header: {
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 0.5,
+    borderBottomColor: "rgba(0, 0, 0, 0.1)",
+  },
+  headerTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#000000",
+  },
   errorText: {
     fontSize: 16,
     textAlign: "center",
@@ -93,7 +120,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
   },
-
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
