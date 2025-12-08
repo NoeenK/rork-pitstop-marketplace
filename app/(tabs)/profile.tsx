@@ -330,7 +330,7 @@ const createStyles = (colors: any, insets: { top: number }) => StyleSheet.create
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 60 + insets.top,
+    paddingTop: 16,
     paddingHorizontal: 16,
   },
   header: {

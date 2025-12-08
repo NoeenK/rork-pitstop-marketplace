@@ -33,7 +33,7 @@ export default function ProfileSettingsScreen() {
       <Stack.Screen
         options={{
           title: "Settings",
-          headerShown: false,
+          headerShown: true,
         }}
       />
 

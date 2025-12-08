@@ -86,7 +86,7 @@ export default function HomeScreen() {
           <View style={styles.userHeader}>
             <TouchableOpacity 
               style={styles.userInfo}
-              onPress={() => router.push("/profile/settings")}
+              onPress={() => router.push("/profile")}
             >
               {user?.avatarUrl ? (
                 <Image
