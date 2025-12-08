@@ -30,6 +30,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("FRC");
   const [showLocationModal, setShowLocationModal] = useState(false);
+  const [showMapInModal, setShowMapInModal] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
   const indicatorPosition = useRef(new Animated.Value(0)).current;
   const { city, latitude, longitude } = useLocation();
@@ -392,7 +393,10 @@ export default function HomeScreen() {
           visible={showLocationModal}
           transparent={true}
           animationType="fade"
-          onRequestClose={() => setShowLocationModal(false)}
+          onRequestClose={() => {
+            setShowLocationModal(false);
+            setShowMapInModal(false);
+          }}
         >
           <View style={styles.modalOverlay}>
             <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
@@ -402,7 +406,10 @@ export default function HomeScreen() {
                   <Text style={[styles.modalTitle, { color: colors.text }]}>Your Location</Text>
                 </View>
                 <TouchableOpacity
-                  onPress={() => setShowLocationModal(false)}
+                  onPress={() => {
+                    setShowLocationModal(false);
+                    setShowMapInModal(false);
+                  }}
                   style={styles.closeButton}
                 >
                   <X size={24} color={colors.text} />
@@ -413,32 +420,62 @@ export default function HomeScreen() {
                 {city}
               </Text>
 
-              {latitude && longitude ? (
-                <View style={styles.mapWrapper}>
-                  <GoogleMapView
-                    latitude={latitude}
-                    longitude={longitude}
-                    showUserLocation={true}
-                    style={styles.modalMap}
-                  />
-                </View>
-              ) : (
-                <View style={styles.noLocationContainer}>
-                  <Text style={[styles.noLocationText, { color: colors.textSecondary }]}>
-                    Location not available
-                  </Text>
-                </View>
-              )}
+              {showMapInModal ? (
+                <>
+                  {latitude && longitude ? (
+                    <View style={styles.mapWrapper}>
+                      <GoogleMapView
+                        latitude={latitude}
+                        longitude={longitude}
+                        showUserLocation={true}
+                        style={styles.modalMap}
+                      />
+                    </View>
+                  ) : (
+                    <View style={styles.noLocationContainer}>
+                      <Text style={[styles.noLocationText, { color: colors.textSecondary }]}>
+                        Location not available
+                      </Text>
+                    </View>
+                  )}
 
-              <TouchableOpacity
-                style={[styles.manageButton, { backgroundColor: colors.primary }]}
-                onPress={() => {
-                  setShowLocationModal(false);
-                  router.push("/profile/manage-neighbourhood");
-                }}
-              >
-                <Text style={styles.manageButtonText}>Manage Neighbourhood</Text>
-              </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.manageButton, { backgroundColor: colors.primary }]}
+                    onPress={() => {
+                      setShowLocationModal(false);
+                      setShowMapInModal(false);
+                    }}
+                  >
+                    <Text style={styles.manageButtonText}>Confirm Location</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  {latitude && longitude ? (
+                    <View style={styles.mapWrapper}>
+                      <GoogleMapView
+                        latitude={latitude}
+                        longitude={longitude}
+                        showUserLocation={true}
+                        style={styles.modalMap}
+                      />
+                    </View>
+                  ) : (
+                    <View style={styles.noLocationContainer}>
+                      <Text style={[styles.noLocationText, { color: colors.textSecondary }]}>
+                        Location not available
+                      </Text>
+                    </View>
+                  )}
+
+                  <TouchableOpacity
+                    style={[styles.manageButton, { backgroundColor: colors.primary }]}
+                    onPress={() => setShowMapInModal(true)}
+                  >
+                    <Text style={styles.manageButtonText}>Use my current location</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           </View>
         </Modal>
