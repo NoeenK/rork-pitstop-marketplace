@@ -1,9 +1,8 @@
-import { View, ScrollView, StyleSheet, TouchableOpacity, RefreshControl, Text, Animated, Platform, Image, Dimensions, Modal, TextInput, FlatList, ActivityIndicator, Keyboard } from "react-native";
+import { View, ScrollView, StyleSheet, TouchableOpacity, RefreshControl, Text, Animated, Platform, Image, Dimensions, Modal } from "react-native";
 import { Stack, useRouter } from "expo-router";
-import { MapPin, SlidersHorizontal, X, Search } from "lucide-react-native";
+import { MapPin, SlidersHorizontal, X } from "lucide-react-native";
 import { useState, useRef, useMemo, useCallback } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import * as Location from "expo-location";
 import { useListings } from "@/contexts/ListingsContext";
 import { Category } from "@/types";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -31,92 +30,13 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("FRC");
   const [showLocationModal, setShowLocationModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<{city: string, latitude: number, longitude: number} | null>(null);
+  const [showMapInModal, setShowMapInModal] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
   const indicatorPosition = useRef(new Animated.Value(0)).current;
-  const { city, latitude, longitude, setCustomLocation } = useLocation();
+  const { city, latitude, longitude } = useLocation();
 
   const CATEGORIES = ["FRC", "FTC", "FLL"];
   const CATEGORY_WIDTH = SCREEN_WIDTH / 3;
-
-  const searchLocation = useCallback(async (query: string) => {
-    if (!query || query.trim().length < 3) {
-      setSearchResults([]);
-      return;
-    }
-
-    setSearching(true);
-    try {
-      const results = await Location.geocodeAsync(query);
-      if (results && results.length > 0) {
-        const detailedResults = await Promise.all(
-          results.slice(0, 5).map(async (result) => {
-            try {
-              const [reverseGeocode] = await Location.reverseGeocodeAsync({
-                latitude: result.latitude,
-                longitude: result.longitude,
-              });
-              return {
-                ...result,
-                city: reverseGeocode?.city || reverseGeocode?.subregion || "Unknown",
-                country: reverseGeocode?.country || "",
-                fullAddress: [
-                  reverseGeocode?.name,
-                  reverseGeocode?.street,
-                  reverseGeocode?.city,
-                  reverseGeocode?.region,
-                  reverseGeocode?.country
-                ].filter(Boolean).join(", "),
-              };
-            } catch {
-              return {
-                ...result,
-                city: "Unknown",
-                country: "",
-                fullAddress: query,
-              };
-            }
-          })
-        );
-        setSearchResults(detailedResults);
-      } else {
-        setSearchResults([]);
-      }
-    } catch (error) {
-      console.log("Error searching location:", error);
-      setSearchResults([]);
-    } finally {
-      setSearching(false);
-    }
-  }, []);
-
-  const handleLocationSelect = useCallback((result: any) => {
-    setSelectedLocation({
-      city: result.city,
-      latitude: result.latitude,
-      longitude: result.longitude,
-    });
-    setSearchQuery(result.fullAddress || result.city);
-    setSearchResults([]);
-    Keyboard.dismiss();
-  }, []);
-
-  const handleConfirmLocation = useCallback(() => {
-    if (selectedLocation && setCustomLocation) {
-      setCustomLocation(
-        selectedLocation.city,
-        selectedLocation.latitude,
-        selectedLocation.longitude
-      );
-    }
-    setShowLocationModal(false);
-    setSearchQuery("");
-    setSearchResults([]);
-    setSelectedLocation(null);
-  }, [selectedLocation, setCustomLocation]);
 
   const handleSearchChange = (text: string) => {
     setSearchText(text);
@@ -475,9 +395,7 @@ export default function HomeScreen() {
           animationType="fade"
           onRequestClose={() => {
             setShowLocationModal(false);
-            setSearchQuery("");
-            setSearchResults([]);
-            setSelectedLocation(null);
+            setShowMapInModal(false);
           }}
         >
           <View style={styles.modalOverlay}>
@@ -490,9 +408,7 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   onPress={() => {
                     setShowLocationModal(false);
-                    setSearchQuery("");
-                    setSearchResults([]);
-                    setSelectedLocation(null);
+                    setShowMapInModal(false);
                   }}
                   style={styles.closeButton}
                 >
@@ -500,69 +416,35 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               </View>
 
-              <Text style={[styles.currentLocationLabel, { color: colors.textSecondary }]}>
-                Current: {city}
+              <Text style={[styles.locationText, { color: colors.textSecondary }]}>
+                {city}
               </Text>
 
-              <View style={[styles.searchContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                <Search size={20} color={colors.textSecondary} />
-                <TextInput
-                  style={[styles.searchInput, { color: colors.text }]}
-                  placeholder="Search for a location..."
-                  placeholderTextColor={colors.textSecondary}
-                  value={searchQuery}
-                  onChangeText={(text) => {
-                    setSearchQuery(text);
-                    searchLocation(text);
-                  }}
-                  autoCorrect={false}
-                />
-                {searching && <ActivityIndicator size="small" color={colors.primary} />}
-              </View>
-
-              {searchResults.length > 0 && (
-                <View style={[styles.searchResultsContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                  <FlatList
-                    data={searchResults}
-                    keyExtractor={(item, index) => `${item.latitude}-${item.longitude}-${index}`}
-                    renderItem={({ item }) => (
-                      <TouchableOpacity
-                        style={styles.searchResultItem}
-                        onPress={() => handleLocationSelect(item)}
-                      >
-                        <MapPin size={16} color={colors.textSecondary} />
-                        <View style={styles.searchResultTextContainer}>
-                          <Text style={[styles.searchResultCity, { color: colors.text }]}>
-                            {item.city}
-                          </Text>
-                          <Text style={[styles.searchResultAddress, { color: colors.textSecondary }]} numberOfLines={1}>
-                            {item.fullAddress}
-                          </Text>
-                        </View>
-                      </TouchableOpacity>
-                    )}
-                    style={styles.searchResultsList}
-                    keyboardShouldPersistTaps="handled"
-                  />
-                </View>
-              )}
-
-              {selectedLocation ? (
+              {showMapInModal ? (
                 <>
-                  {selectedLocation.latitude && selectedLocation.longitude ? (
+                  {latitude && longitude ? (
                     <View style={styles.mapWrapper}>
                       <GoogleMapView
-                        latitude={selectedLocation.latitude}
-                        longitude={selectedLocation.longitude}
-                        showUserLocation={false}
+                        latitude={latitude}
+                        longitude={longitude}
+                        showUserLocation={true}
                         style={styles.modalMap}
                       />
                     </View>
-                  ) : null}
+                  ) : (
+                    <View style={styles.noLocationContainer}>
+                      <Text style={[styles.noLocationText, { color: colors.textSecondary }]}>
+                        Location not available
+                      </Text>
+                    </View>
+                  )}
 
                   <TouchableOpacity
                     style={[styles.manageButton, { backgroundColor: colors.primary }]}
-                    onPress={handleConfirmLocation}
+                    onPress={() => {
+                      setShowLocationModal(false);
+                      setShowMapInModal(false);
+                    }}
                   >
                     <Text style={styles.manageButtonText}>Confirm Location</Text>
                   </TouchableOpacity>
@@ -588,9 +470,7 @@ export default function HomeScreen() {
 
                   <TouchableOpacity
                     style={[styles.manageButton, { backgroundColor: colors.primary }]}
-                    onPress={() => {
-                      setShowLocationModal(false);
-                    }}
+                    onPress={() => setShowMapInModal(true)}
                   >
                     <Text style={styles.manageButtonText}>Use my current location</Text>
                   </TouchableOpacity>
@@ -767,53 +647,9 @@ const styles = StyleSheet.create({
   closeButton: {
     padding: 4,
   },
-  currentLocationLabel: {
-    fontSize: 14,
-    marginBottom: 12,
-  },
-  searchContainer: {
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 12,
-    gap: 8,
-  },
-  searchInput: {
-    flex: 1,
+  locationText: {
     fontSize: 16,
-    padding: 0,
-  },
-  searchResultsContainer: {
-    maxHeight: 200,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 12,
-    overflow: "hidden",
-  },
-  searchResultsList: {
-    flexGrow: 0,
-  },
-  searchResultItem: {
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    padding: 12,
-    gap: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(128, 128, 128, 0.1)",
-  },
-  searchResultTextContainer: {
-    flex: 1,
-  },
-  searchResultCity: {
-    fontSize: 16,
-    fontWeight: "600" as const,
-    marginBottom: 2,
-  },
-  searchResultAddress: {
-    fontSize: 13,
+    marginBottom: 16,
   },
   mapWrapper: {
     borderRadius: 12,
