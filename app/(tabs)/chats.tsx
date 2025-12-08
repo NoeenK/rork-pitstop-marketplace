@@ -1,6 +1,6 @@
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform, TextInput } from "react-native";
 import { useRouter, Stack } from "expo-router";
-import { MessageCircle, ChevronRight, Camera, Edit3, Search, Filter, Plus } from "lucide-react-native";
+import { MessageCircle, ChevronRight, Search, Filter, Plus } from "lucide-react-native";
 import { useChat } from "@/contexts/ChatContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -98,29 +98,7 @@ export default function ChatsScreen() {
             />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Messages</Text>
-          <View style={styles.headerActions}>
-            <TouchableOpacity 
-              style={styles.iconButton}
-              onPress={() => {
-                if (Platform.OS !== "web") {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }
-              }}
-            >
-              <Camera size={22} color="#000000" />
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.iconButton}
-              onPress={() => {
-                if (Platform.OS !== "web") {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }
-                router.push('/contacts');
-              }}
-            >
-              <Edit3 size={22} color="#000000" />
-            </TouchableOpacity>
-          </View>
+          <View style={styles.headerActions} />
         </View>
 
         {/* Search Bar */}
