@@ -235,6 +235,14 @@ export const [LocationProvider, useLocation] = createContextHook(() => {
     }
   }, []);
 
+  const setCustomLocation = useCallback((newCity: string, newLatitude: number, newLongitude: number) => {
+    console.log("[LocationContext] Setting custom location:", newCity, newLatitude, newLongitude);
+    setCity(newCity);
+    setLatitude(newLatitude);
+    setLongitude(newLongitude);
+    stopLocationTracking();
+  }, [stopLocationTracking]);
+
   useEffect(() => {
     fetchLocation().then(() => {
       // Start real-time tracking after initial location is fetched
@@ -259,5 +267,6 @@ export const [LocationProvider, useLocation] = createContextHook(() => {
     hasRequestedPermissions,
     startLocationTracking,
     stopLocationTracking,
-  }), [city, country, latitude, longitude, loading, error, requestPermission, refreshLocation, requestAllPermissions, hasRequestedPermissions, startLocationTracking, stopLocationTracking]);
+    setCustomLocation,
+  }), [city, country, latitude, longitude, loading, error, requestPermission, refreshLocation, requestAllPermissions, hasRequestedPermissions, startLocationTracking, stopLocationTracking, setCustomLocation]);
 });
