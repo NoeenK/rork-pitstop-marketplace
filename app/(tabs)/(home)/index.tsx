@@ -1,15 +1,17 @@
-import { View, ScrollView, StyleSheet, TouchableOpacity, RefreshControl, Text, Animated, Platform, Image, Dimensions } from "react-native";
+import { View, ScrollView, StyleSheet, TouchableOpacity, RefreshControl, Text, Animated, Platform, Image, Dimensions, Modal } from "react-native";
 import { Stack, useRouter } from "expo-router";
-import { MapPin, SlidersHorizontal } from "lucide-react-native";
+import { MapPin, SlidersHorizontal, X } from "lucide-react-native";
 import { useState, useRef, useMemo, useCallback } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useListings } from "@/contexts/ListingsContext";
 import { Category } from "@/types";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLocation } from "@/contexts/LocationContext";
 import SearchBar from "@/components/SearchBar";
 import HorizontalListingCard from "@/components/HorizontalListingCard";
 import SectionHeader from "@/components/SectionHeader";
+import GoogleMapView from "@/components/GoogleMapView";
 
 import ScreenWrapper from "@/components/ScreenWrapper";
 
@@ -27,8 +29,10 @@ export default function HomeScreen() {
   const [searchText, setSearchText] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("FRC");
+  const [showLocationModal, setShowLocationModal] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
   const indicatorPosition = useRef(new Animated.Value(0)).current;
+  const { city, latitude, longitude } = useLocation();
 
   const CATEGORIES = ["FRC", "FTC", "FLL"];
   const CATEGORY_WIDTH = SCREEN_WIDTH / 3;
@@ -102,7 +106,10 @@ export default function HomeScreen() {
                 </Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.bellButton}>
+            <TouchableOpacity 
+              style={styles.bellButton}
+              onPress={() => setShowLocationModal(true)}
+            >
               <MapPin size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
@@ -380,6 +387,61 @@ export default function HomeScreen() {
 
           <View style={{ height: 60 }} />
         </Animated.ScrollView>
+
+        <Modal
+          visible={showLocationModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowLocationModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+              <View style={styles.modalHeader}>
+                <View style={styles.modalTitleContainer}>
+                  <MapPin size={24} color={colors.primary} />
+                  <Text style={[styles.modalTitle, { color: colors.text }]}>Your Location</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => setShowLocationModal(false)}
+                  style={styles.closeButton}
+                >
+                  <X size={24} color={colors.text} />
+                </TouchableOpacity>
+              </View>
+
+              <Text style={[styles.locationText, { color: colors.textSecondary }]}>
+                {city}
+              </Text>
+
+              {latitude && longitude ? (
+                <View style={styles.mapWrapper}>
+                  <GoogleMapView
+                    latitude={latitude}
+                    longitude={longitude}
+                    showUserLocation={true}
+                    style={styles.modalMap}
+                  />
+                </View>
+              ) : (
+                <View style={styles.noLocationContainer}>
+                  <Text style={[styles.noLocationText, { color: colors.textSecondary }]}>
+                    Location not available
+                  </Text>
+                </View>
+              )}
+
+              <TouchableOpacity
+                style={[styles.manageButton, { backgroundColor: colors.primary }]}
+                onPress={() => {
+                  setShowLocationModal(false);
+                  router.push("/profile/manage-neighbourhood");
+                }}
+              >
+                <Text style={styles.manageButtonText}>Manage Neighbourhood</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </View>
     </ScreenWrapper>
   );
@@ -511,5 +573,75 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     fontStyle: "italic" as const,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "center" as const,
+    alignItems: "center" as const,
+    padding: 20,
+  },
+  modalContent: {
+    width: "100%" as const,
+    maxWidth: 400,
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: "row" as const,
+    justifyContent: "space-between" as const,
+    alignItems: "center" as const,
+    marginBottom: 16,
+  },
+  modalTitleContainer: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 12,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "700" as const,
+  },
+  closeButton: {
+    padding: 4,
+  },
+  locationText: {
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  mapWrapper: {
+    borderRadius: 12,
+    overflow: "hidden",
+    marginBottom: 20,
+  },
+  modalMap: {
+    height: 250,
+    width: "100%" as const,
+  },
+  noLocationContainer: {
+    height: 250,
+    justifyContent: "center" as const,
+    alignItems: "center" as const,
+    borderRadius: 12,
+    backgroundColor: "rgba(128, 128, 128, 0.1)",
+    marginBottom: 20,
+  },
+  noLocationText: {
+    fontSize: 14,
+  },
+  manageButton: {
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: "center" as const,
+  },
+  manageButtonText: {
+    fontSize: 16,
+    fontWeight: "600" as const,
+    color: "#FFFFFF",
   },
 });
