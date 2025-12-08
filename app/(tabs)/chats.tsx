@@ -1,6 +1,6 @@
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform, TextInput } from "react-native";
 import { useRouter, Stack } from "expo-router";
-import { MessageCircle, ChevronRight, Search, Filter, Plus } from "lucide-react-native";
+import { MessageCircle, Search, Filter, Plus } from "lucide-react-native";
 import { useChat } from "@/contexts/ChatContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -87,18 +87,7 @@ export default function ChatsScreen() {
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.headerTop}>
-          <TouchableOpacity 
-            onPress={() => router.back()} 
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <ChevronRight 
-              size={24} 
-              color="#000000" 
-              style={{ transform: [{ rotate: '180deg' }] }} 
-            />
-          </TouchableOpacity>
           <Text style={styles.headerTitle}>Messages</Text>
-          <View style={styles.headerActions} />
         </View>
 
         {/* Search Bar */}
