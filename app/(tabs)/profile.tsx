@@ -338,7 +338,7 @@ const createStyles = (colors: any, insets: { top: number }) => StyleSheet.create
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 4,
-    paddingTop: insets.top + 12,
+    paddingTop: insets.top + 25,
     paddingBottom: 12,
     marginBottom: 8,
   },
