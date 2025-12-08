@@ -111,7 +111,7 @@ export default function VerificationScreen() {
           <TextInput
             style={styles.input}
             placeholder="e.g., 7558"
-            placeholderTextColor={Colors.textSecondary}
+            placeholderTextColor="#8E8E93"
             value={teamNumber}
             onChangeText={setTeamNumber}
             keyboardType="number-pad"
@@ -123,7 +123,7 @@ export default function VerificationScreen() {
           <TextInput
             style={styles.input}
             placeholder="e.g., Toronto Tech High"
-            placeholderTextColor={Colors.textSecondary}
+            placeholderTextColor="#8E8E93"
             value={schoolName}
             onChangeText={setSchoolName}
           />
@@ -164,7 +164,7 @@ export default function VerificationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: "#FFFFFF",
   },
   header: {
     alignItems: "center",
@@ -182,12 +182,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "800" as const,
-    color: Colors.text,
+    color: "#000000",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 15,
-    color: Colors.textSecondary,
+    color: "#8E8E93",
     textAlign: "center",
     lineHeight: 22,
   },
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: "#000000",
     marginBottom: 16,
   },
   benefitItem: {
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   },
   benefitText: {
     fontSize: 15,
-    color: Colors.text,
+    color: "#000000",
   },
   steps: {
     padding: 16,
@@ -236,12 +236,12 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 16,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: "#000000",
     marginBottom: 4,
   },
   stepDescription: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: "#8E8E93",
     lineHeight: 20,
   },
   stepCompleted: {
@@ -256,12 +256,12 @@ const styles = StyleSheet.create({
   formTitle: {
     fontSize: 18,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: "#000000",
     marginBottom: 8,
   },
   formSubtitle: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: "#8E8E93",
     marginBottom: 16,
     lineHeight: 20,
   },
@@ -271,24 +271,24 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: "#000000",
     marginBottom: 8,
   },
   input: {
-    backgroundColor: Colors.card,
+    backgroundColor: "#F2F2F7",
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: Colors.text,
+    color: "#000000",
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: "#E5E5EA",
   },
   uploadButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 12,
-    backgroundColor: Colors.card,
+    backgroundColor: "#F2F2F7",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
   },
   noteText: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: "#8E8E93",
     textAlign: "center",
     lineHeight: 20,
   },

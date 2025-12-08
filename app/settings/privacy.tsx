@@ -35,7 +35,7 @@ export default function PrivacyScreen() {
           <Switch
             value={showProfile}
             onValueChange={setShowProfile}
-            trackColor={{ false: Colors.border, true: Colors.accent + "40" }}
+            trackColor={{ false: "#E5E5EA", true: Colors.accent + "40" }}
             thumbColor={showProfile ? Colors.accent : Colors.textSecondary}
           />
         </View>
@@ -51,7 +51,7 @@ export default function PrivacyScreen() {
           <Switch
             value={showActivity}
             onValueChange={setShowActivity}
-            trackColor={{ false: Colors.border, true: Colors.accent + "40" }}
+            trackColor={{ false: "#E5E5EA", true: Colors.accent + "40" }}
             thumbColor={showActivity ? Colors.accent : Colors.textSecondary}
           />
         </View>
@@ -70,7 +70,7 @@ export default function PrivacyScreen() {
           <Switch
             value={allowMessages}
             onValueChange={setAllowMessages}
-            trackColor={{ false: Colors.border, true: Colors.accent + "40" }}
+            trackColor={{ false: "#E5E5EA", true: Colors.accent + "40" }}
             thumbColor={allowMessages ? Colors.accent : Colors.textSecondary}
           />
         </View>
@@ -89,7 +89,7 @@ export default function PrivacyScreen() {
           <Switch
             value={dataCollection}
             onValueChange={setDataCollection}
-            trackColor={{ false: Colors.border, true: Colors.accent + "40" }}
+            trackColor={{ false: "#E5E5EA", true: Colors.accent + "40" }}
             thumbColor={dataCollection ? Colors.accent : Colors.textSecondary}
           />
         </View>
@@ -105,7 +105,7 @@ export default function PrivacyScreen() {
           <Switch
             value={marketingEmails}
             onValueChange={setMarketingEmails}
-            trackColor={{ false: Colors.border, true: Colors.accent + "40" }}
+            trackColor={{ false: "#E5E5EA", true: Colors.accent + "40" }}
             thumbColor={marketingEmails ? Colors.accent : Colors.textSecondary}
           />
         </View>
@@ -141,7 +141,7 @@ export default function PrivacyScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: "#FFFFFF",
   },
   header: {
     alignItems: "center",
@@ -159,24 +159,24 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "800" as const,
-    color: Colors.text,
+    color: "#000000",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 15,
-    color: Colors.textSecondary,
+    color: "#8E8E93",
     textAlign: "center",
     lineHeight: 22,
   },
   section: {
     padding: 16,
     borderBottomWidth: 0.5,
-    borderBottomColor: Colors.border,
+    borderBottomColor: "#E5E5EA",
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: "#000000",
     marginBottom: 16,
   },
   settingItem: {
@@ -198,12 +198,12 @@ const styles = StyleSheet.create({
   settingText: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: "#000000",
     marginBottom: 2,
   },
   settingSubtext: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: "#8E8E93",
   },
   linkItem: {
     flexDirection: "row",
@@ -211,12 +211,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 16,
     borderBottomWidth: 0.5,
-    borderBottomColor: Colors.border,
+    borderBottomColor: "#E5E5EA",
   },
   linkText: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: "#000000",
   },
   footer: {
     padding: 16,
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: "#8E8E93",
     textAlign: "center",
     lineHeight: 20,
   },
