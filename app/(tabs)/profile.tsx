@@ -330,7 +330,7 @@ const createStyles = (colors: any, insets: { top: number }) => StyleSheet.create
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 16,
+    paddingTop: 0,
     paddingHorizontal: 16,
   },
   header: {
@@ -338,7 +338,9 @@ const createStyles = (colors: any, insets: { top: number }) => StyleSheet.create
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 4,
-    marginBottom: 20,
+    paddingTop: insets.top + 12,
+    paddingBottom: 12,
+    marginBottom: 8,
   },
   headerTitle: {
     fontSize: 32,
