@@ -1,13 +1,11 @@
-import { View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity } from "react-native";
-import { Stack, useRouter } from "expo-router";
-import { Heart, SlidersHorizontal, MapPin } from "lucide-react-native";
+import { View, Text, ScrollView, StyleSheet, RefreshControl } from "react-native";
+import { Stack } from "expo-router";
+import { Heart } from "lucide-react-native";
 import { useState } from "react";
 import { useSavedListings } from "@/contexts/SavedListingsContext";
 import { useListings } from "@/contexts/ListingsContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useLocation } from "@/contexts/LocationContext";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ListingCard from "@/components/ListingCard";
 import EmptyState from "@/components/EmptyState";
 
@@ -17,9 +15,6 @@ export default function SavedListingsScreen() {
   const { allListings } = useListings();
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const { colors } = useTheme();
-  const { requestPermission } = useLocation();
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
 
   const savedListingIds = getUserSavedListingIds();
   const savedListings = allListings.filter((listing) => 
@@ -32,12 +27,6 @@ export default function SavedListingsScreen() {
     setRefreshing(false);
   };
 
-  const handleLocationPress = () => {
-    requestPermission();
-  };
-
-  const dynamicStyles = createDynamicStyles(colors, insets);
-
   if (!user) {
     return (
       <View style={styles.container}>
@@ -46,17 +35,6 @@ export default function SavedListingsScreen() {
             headerShown: false,
           }}
         />
-        <View style={dynamicStyles.redHeader}>
-          <Text style={styles.headerTitle}>Wishlists</Text>
-          <View style={styles.headerActions}>
-            <TouchableOpacity onPress={() => router.push("/filters")} style={styles.iconButton}>
-              <SlidersHorizontal size={20} color="#FFFFFF" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleLocationPress} style={styles.iconButton}>
-              <MapPin size={20} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-        </View>
         <Text style={[styles.errorText, { color: colors.text }]}>Please sign in to view saved listings</Text>
       </View>
     );
@@ -69,20 +47,8 @@ export default function SavedListingsScreen() {
           headerShown: false,
         }}
       />
-      <View style={dynamicStyles.redHeader}>
-        <Text style={styles.headerTitle}>Wishlists</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity onPress={() => router.push("/filters")} style={styles.iconButton}>
-            <SlidersHorizontal size={20} color="#FFFFFF" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleLocationPress} style={styles.iconButton}>
-            <MapPin size={20} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
       <ScrollView
-        style={[styles.scroll, dynamicStyles.scrollView]}
+        style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -119,38 +85,11 @@ export default function SavedListingsScreen() {
   );
 }
 
-const createDynamicStyles = (colors: any, insets: any) => StyleSheet.create({
-  redHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: insets.top + 12,
-    paddingBottom: 16,
-    backgroundColor: '#CC3333',
-  },
-  scrollView: {
-    paddingTop: 0,
-  },
-});
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "700" as const,
-    color: "#FFFFFF",
-  },
-  headerActions: {
-    flexDirection: "row",
-    gap: 12,
-    alignItems: "center",
-  },
-  iconButton: {
-    padding: 4,
-  },
+
   errorText: {
     fontSize: 16,
     textAlign: "center",
