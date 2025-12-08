@@ -1,29 +1,22 @@
-import { View, ScrollView, StyleSheet, Text, TouchableOpacity } from "react-native";
-import { Stack, useRouter } from "expo-router";
-import { Heart, SlidersHorizontal, MapPin } from "lucide-react-native";
+import { View, ScrollView, StyleSheet } from "react-native";
+import { Stack } from "expo-router";
+import { Heart } from "lucide-react-native";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useSavedListings } from "@/contexts/SavedListingsContext";
 import { useListings } from "@/contexts/ListingsContext";
-import { useLocation } from "@/contexts/LocationContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import EmptyState from "@/components/EmptyState";
 import ListingCard from "@/components/ListingCard";
 import ScreenWrapper from "@/components/ScreenWrapper";
 
 export default function ActivityScreen() {
-  const router = useRouter();
   const { colors } = useTheme();
   const { getUserSavedListingIds } = useSavedListings();
   const { allListings } = useListings();
-  const { requestPermission } = useLocation();
   const insets = useSafeAreaInsets();
 
   const savedListingIds = getUserSavedListingIds();
   const savedListings = allListings.filter(listing => savedListingIds.includes(listing.id));
-
-  const handleLocationPress = () => {
-    requestPermission();
-  };
 
   return (
     <ScreenWrapper>
@@ -33,20 +26,8 @@ export default function ActivityScreen() {
         }}
       />
 
-      <View style={[styles.redHeader, { paddingTop: insets.top + 12 }]}>
-        <Text style={styles.headerTitle}>Wishlist</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity onPress={() => router.push("/filters")} style={styles.iconButton}>
-            <SlidersHorizontal size={20} color="#FFFFFF" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleLocationPress} style={styles.iconButton}>
-            <MapPin size={20} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
       <ScrollView 
-        style={[styles.container, { backgroundColor: colors.background }]} 
+        style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]} 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
@@ -69,27 +50,6 @@ export default function ActivityScreen() {
 }
 
 const styles = StyleSheet.create({
-  redHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    backgroundColor: '#CC3333',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "700" as const,
-    color: "#FFFFFF",
-  },
-  headerActions: {
-    flexDirection: "row",
-    gap: 12,
-    alignItems: "center",
-  },
-  iconButton: {
-    padding: 4,
-  },
   container: {
     flex: 1,
   },

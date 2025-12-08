@@ -254,14 +254,9 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 28,
+    fontWeight: "700",
     color: "#000000",
-    position: "absolute",
-    left: 0,
-    right: 0,
-    textAlign: "center",
-    zIndex: -1,
   },
   headerActions: {
     flexDirection: "row",
