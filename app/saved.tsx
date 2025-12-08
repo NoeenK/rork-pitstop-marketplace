@@ -66,19 +66,11 @@ export default function SavedListingsScreen() {
             description="Items you save will appear here"
           />
         ) : (
-          <>
-            <View style={styles.header}>
-              <Heart size={20} color={colors.accent} fill={colors.accent} />
-              <Text style={[styles.headerText, { color: colors.text }]}>
-                {savedListings.length} {savedListings.length === 1 ? "item" : "items"} saved
-              </Text>
-            </View>
-            <View style={styles.grid}>
-              {savedListings.map((listing) => (
-                <ListingCard key={listing.id} listing={listing} />
-              ))}
-            </View>
-          </>
+          <View style={styles.grid}>
+            {savedListings.map((listing) => (
+              <ListingCard key={listing.id} listing={listing} />
+            ))}
+          </View>
         )}
       </ScrollView>
     </View>
@@ -101,17 +93,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 16,
-    paddingHorizontal: 4,
-  },
-  headerText: {
-    fontSize: 16,
-    fontWeight: "600" as const,
-  },
+
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
