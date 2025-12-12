@@ -115,9 +115,14 @@ export default function NewListingScreen() {
 
       Alert.alert("Success", "Listing created successfully!");
       router.back();
-    } catch (err) {
-      console.error("[NewListing] Failed to create listing:", err);
-      Alert.alert("Error", "Failed to create listing");
+    } catch (err: any) {
+      console.error("[NewListing] Failed to create listing:", {
+        message: err?.message || 'Unknown error',
+        stack: err?.stack || '',
+        error: err
+      });
+      const errorMessage = err?.message || "Failed to create listing. Please try again.";
+      Alert.alert("Error", errorMessage);
     } finally {
       setIsLoading(false);
     }

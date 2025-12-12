@@ -158,7 +158,6 @@ export const [ListingsProvider, useListings] = createContextHook(() => {
           description: listing.description,
           category: listing.category,
           condition: listing.condition,
-          price: listing.priceCents || 0,
           price_cents: listing.priceCents,
           is_swap_only: listing.isSwapOnly,
           city: listing.city,
@@ -180,16 +179,25 @@ export const [ListingsProvider, useListings] = createContextHook(() => {
         .single();
 
       if (error) {
-        console.error("[ListingsContext] Error creating listing:", error);
-        throw error;
+        console.error("[ListingsContext] Error creating listing:", {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw new Error(error.message || 'Failed to create listing');
       }
 
       const newListing = mapListingFromDb(data, data.seller);
       setListings(prev => [newListing, ...prev]);
       console.log("[ListingsContext] Listing created:", newListing.id);
       return newListing;
-    } catch (error) {
-      console.error("[ListingsContext] Failed to create listing:", error);
+    } catch (error: any) {
+      console.error("[ListingsContext] Failed to create listing:", {
+        message: error?.message || 'Unknown error',
+        stack: error?.stack || '',
+        error: error
+      });
       throw error;
     } finally {
       setIsLoading(false);
