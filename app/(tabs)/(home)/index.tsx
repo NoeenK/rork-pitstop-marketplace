@@ -1,7 +1,7 @@
 import { View, ScrollView, StyleSheet, TouchableOpacity, RefreshControl, Text, Animated, Platform, Image, Dimensions, Modal } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { MapPin, SlidersHorizontal, X } from "lucide-react-native";
-import { useState, useRef, useMemo, useCallback } from "react";
+import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useListings } from "@/contexts/ListingsContext";
 import { Category } from "@/types";
@@ -20,7 +20,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 
 export default function HomeScreen() {
-  const { listings } = useListings();
+  const { listings, setRoboticsFilter } = useListings();
 
   const { colors } = useTheme();
   const { user } = useAuth();
@@ -36,6 +36,10 @@ export default function HomeScreen() {
   const { city, latitude, longitude } = useLocation();
 
   const CATEGORIES = ["FRC", "FTC", "FLL"];
+
+  useEffect(() => {
+    setRoboticsFilter("FRC");
+  }, [setRoboticsFilter]);
   const CATEGORY_WIDTH = SCREEN_WIDTH / 3;
 
   const handleSearchChange = (text: string) => {
@@ -50,13 +54,14 @@ export default function HomeScreen() {
 
   const handleCategoryChange = useCallback((category: string, index: number) => {
     setSelectedCategory(category);
+    setRoboticsFilter(category as "FRC" | "FTC" | "FLL");
     Animated.spring(indicatorPosition, {
       toValue: index * CATEGORY_WIDTH,
       useNativeDriver: true,
       friction: 8,
       tension: 100,
     }).start();
-  }, [indicatorPosition, CATEGORY_WIDTH]);
+  }, [indicatorPosition, CATEGORY_WIDTH, setRoboticsFilter]);
 
   const recommendedListings = useMemo(() => listings.filter(l => l.likeCount >= 10).slice(0, 6), [listings]);
   const popularNearbyListings = useMemo(() => listings.filter(l => l.viewCount >= 40).slice(0, 6), [listings]);

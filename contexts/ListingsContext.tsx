@@ -19,7 +19,7 @@ const mapListingFromDb = (listing: any, seller?: any): Listing => ({
   country: listing.country,
   images: listing.images || [],
   seasonTag: listing.season_tag || undefined,
-  roboticsCategory: "FRC" as RoboticsCategory, // Default, can be added to schema later
+  roboticsCategory: (listing.robotics_category || "FRC") as RoboticsCategory,
   isActive: listing.is_active,
   createdAt: new Date(listing.created_at),
   viewCount: listing.view_count || 0,
@@ -165,6 +165,7 @@ export const [ListingsProvider, useListings] = createContextHook(() => {
           country: listing.country,
           images: listing.images || [],
           season_tag: listing.seasonTag || null,
+          robotics_category: listing.roboticsCategory,
           is_active: true,
           is_sold: false,
           view_count: 0,
