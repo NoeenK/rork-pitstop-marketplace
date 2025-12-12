@@ -28,6 +28,7 @@ export default function NewListingScreen() {
   const [seasonTag, setSeasonTag] = useState<string>("");
   const [images, setImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [roboticsCategory, setRoboticsCategory] = useState<"FRC" | "FTC" | "FLL">("FRC");
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -106,7 +107,7 @@ export default function NewListingScreen() {
         country: user.country,
         images,
         seasonTag: seasonTag.trim() || undefined,
-        roboticsCategory: "FRC",
+        roboticsCategory,
         isActive: true,
         isSold: false,
         priceHistory: [],
@@ -210,6 +211,48 @@ export default function NewListingScreen() {
                 />
               </Fragment>
             ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.label}>Robotics Program *</Text>
+          <View style={styles.roboticsButtonsRow}>
+            <TouchableOpacity 
+              style={[
+                styles.roboticsButton, 
+                roboticsCategory === "FRC" && styles.roboticsButtonSelected
+              ]} 
+              onPress={() => setRoboticsCategory("FRC")}
+            >
+              <Text style={[
+                styles.roboticsButtonText,
+                roboticsCategory === "FRC" && styles.roboticsButtonTextSelected
+              ]}>FRC</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[
+                styles.roboticsButton, 
+                roboticsCategory === "FTC" && styles.roboticsButtonSelected
+              ]} 
+              onPress={() => setRoboticsCategory("FTC")}
+            >
+              <Text style={[
+                styles.roboticsButtonText,
+                roboticsCategory === "FTC" && styles.roboticsButtonTextSelected
+              ]}>FTC</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[
+                styles.roboticsButton, 
+                roboticsCategory === "FLL" && styles.roboticsButtonSelected
+              ]} 
+              onPress={() => setRoboticsCategory("FLL")}
+            >
+              <Text style={[
+                styles.roboticsButtonText,
+                roboticsCategory === "FLL" && styles.roboticsButtonTextSelected
+              ]}>FLL</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -365,5 +408,32 @@ const createStyles = (colors: any) => StyleSheet.create({
   submitButton: {
     marginTop: 12,
     marginBottom: 32,
+  },
+  roboticsButtonsRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  roboticsButton: {
+    flex: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  roboticsButtonSelected: {
+    backgroundColor: "#FF6B35",
+    borderColor: "#FF6B35",
+  },
+  roboticsButtonText: {
+    fontSize: 16,
+    fontWeight: "600" as const,
+    color: colors.text,
+  },
+  roboticsButtonTextSelected: {
+    color: "#FFFFFF",
   },
 });
