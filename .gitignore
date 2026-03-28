@@ -1,2 +1,3 @@
-https://stackblitz.com/storage/blobs/eyJfcmFpbHMiOnsiZGF0YSI6MTAyMzkxMDEwLCJwdXIiOiJibG9iX2lkIn19--c5d626819966fac3cd3eaf10215bb23cbfd8c0dc/.gitignore
+node_modules
 .env
+.expo
